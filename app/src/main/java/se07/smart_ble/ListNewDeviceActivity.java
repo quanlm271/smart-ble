@@ -59,6 +59,8 @@ public class ListNewDeviceActivity extends AppCompatActivity {
     private ArrayAdapter arrayAdapter;
     public bleLockDevice mLock;
 
+    private mySerializable mSerialeizable;
+
     private ListView listView_newDevice;
 
     @Override
@@ -87,6 +89,7 @@ public class ListNewDeviceActivity extends AppCompatActivity {
             }
 
         }
+        mSerialeizable = new mySerializable(null);
 
         listView_newDevice = (ListView) findViewById(R.id.listView_newDevice);
         listView_newDevice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -101,13 +104,13 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                 }
                 mLock = lock;
                 mService._connectToDevice(mLock);
+                LockData dLock = new LockData(mLock.ble_name, mLock.ble_mac);
                 Intent intent = new Intent(_context, AddDeviceActivity.class);
-//                intent.putExtra("mData",new mySerializable(mLock));
+                intent.putExtra("mData",new mySerializable(dLock));
                 startActivity(intent);
             }
         });
         service_init();
-
     }
 
     @Override

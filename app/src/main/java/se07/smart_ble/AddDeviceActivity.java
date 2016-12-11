@@ -23,18 +23,16 @@ public class AddDeviceActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_device);
 
         setTitle(_title);
-//        Intent intent = this.getIntent();
-//        mSerializable = (mySerializable) intent.getSerializableExtra("mData");
-//
-//        textView_defaultName = (TextView) findViewById(R.id.textView_defaultName);
-//        textView_MAC = (TextView) findViewById(R.id.textView_MAC);
-//
-//        if(mSerializable != null){
-//            mLock = mSerializable.getLOCK();
-//            textView_defaultName.setText(mLock.ble_name);
-//            textView_MAC.setText(mLock.ble_mac);
-//        }
+        Intent intent = this.getIntent();
+        mSerializable = (mySerializable) intent.getSerializableExtra("mData");
 
+        textView_defaultName = (TextView) findViewById(R.id.textView_defaultName);
+        textView_MAC = (TextView) findViewById(R.id.textView_MAC);
 
+        if(mSerializable != null){
+            LockData mLockData = mSerializable.getLOCK();
+            textView_defaultName.setText(mLockData.get_mName());
+            textView_MAC.setText(mLockData.get_mMAC());
+        }
     }
 }
