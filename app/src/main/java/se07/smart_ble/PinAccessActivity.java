@@ -19,6 +19,8 @@ import android.widget.GridView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Random;
+
 
 public class PinAccessActivity extends AppCompatActivity {
 
@@ -35,12 +37,25 @@ public class PinAccessActivity extends AppCompatActivity {
     private GridView gridView_keyboard;
     private ArrayList<TextView> arrayEditText = new ArrayList<TextView>();
 
+    private mySerializable mSerializable;
+    private LockData mLockData;
+
+    //demo code
+    private int demoUID = 15;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pin_access);
 
         setTitle(_title);
+
+        Intent intent = this.getIntent();
+        mSerializable = (mySerializable) intent.getSerializableExtra("mData");
+
+        if(mSerializable != null){
+            mLockData = mSerializable.getLOCK();
+        }
 
         textView_num1 = (TextView)findViewById(R.id.textView_num1);
         textView_num2 = (TextView)findViewById(R.id.textView_num2);
@@ -75,17 +90,54 @@ public class PinAccessActivity extends AppCompatActivity {
                             countString++;
                             Log.d(_title,"PIN :" + _lockPIN);
                         }else{
-                            for(TextView textView: arrayEditText){
-                                textView.setText(null);
-                            }
-                            countString = 0;
-                            _lockPIN = "";
+//                            for(TextView textView: arrayEditText){
+//                                textView.setText(null);
+//                            }
+//                            countString = 0;
+//                            _lockPIN = "";
+                            getPinData();
                         }
                         break;
 
                 }
             }
         });
+    }
+    private byte[] getPinData(){
+        byte[] byteResult = new byte[20];
+        int index = 3;
+        //PIN
+        byte[] bytePIN = _lockPIN.getBytes();
+        for(int i=0; i<4; i++ ){
+            byteResult[index++]=bytePIN[i];
+        }
+
+        for(int i = 0; i < 2; i++)
+        {
+            Random r = new Random();
+            int n = r.nextInt(255);
+            byteResult[index++]= (byte)n;
+        }
+        //MAC
+        byte[] byteMac = bleDefine.MacToBytes(mLockData.get_mMAC());
+        for(int i=0; i< byteMac.length; i++)
+        {
+            byteResult[index++] = byteMac[i];
+        }
+        //USer ID
+
+        Log.d(_title,bleDefine.bytesToHex(byteResult));
+        return byteMac;
+    }
+
+    private byte[] getUserData(){
+        byte[] byteUserData;
+        byte[] byteRandom;
+//        for(int i=0; i<4; i++)
+//        {
+//
+//        }
+        return null;
     }
 }
 

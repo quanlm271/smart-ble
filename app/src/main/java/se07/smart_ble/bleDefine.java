@@ -1,5 +1,6 @@
 package se07.smart_ble;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -85,5 +86,12 @@ import java.util.UUID;
         }
         return bytes;
     }
+
+    public static byte[] MacToBytes(String Mac){
+        String strMac = Mac.replace(":","");
+        byte[] byteMac = bleDefine.hexToBytes(strMac);
+        return byteMac;
+    }
+
 }
 

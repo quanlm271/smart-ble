@@ -105,7 +105,7 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                 mLock = lock;
                 mService._connectToDevice(mLock);
                 LockData dLock = new LockData(mLock.ble_name, mLock.ble_mac);
-                Intent intent = new Intent(_context, AddDeviceActivity.class);
+                Intent intent = new Intent(_context, PinAccessActivity.class);
                 intent.putExtra("mData",new mySerializable(dLock));
                 startActivity(intent);
             }
