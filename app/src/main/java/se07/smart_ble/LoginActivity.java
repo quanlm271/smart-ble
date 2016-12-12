@@ -1,13 +1,19 @@
 package se07.smart_ble;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -19,12 +25,22 @@ import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
+import se07.smart_ble.API.AccessServiceAPI;
+import se07.smart_ble.API.Common;
 
 public class LoginActivity extends AppCompatActivity {
 
     public Context _context = this;
 
+    private EditText editText_email, editText_pwd;
     private Button button_login, button_register;
+    private TextView textview_alertMessage;
+
+    private ProgressDialog m_ProgresDialog;
+    private AccessServiceAPI m_AccessServiceAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,15 +51,23 @@ public class LoginActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
 
+        // EditText
+        editText_email = (EditText) findViewById(R.id.editText_email);
+        editText_pwd = (EditText)findViewById(R.id.editText_password);
+        // TextView
+        textview_alertMessage = (TextView)findViewById(R.id.textView_loginAlert);
+
+        //
+        m_AccessServiceAPI = new AccessServiceAPI();
+
         //Buttons
         button_login = (Button)findViewById(R.id.button_login);
 
         button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent intent = new Intent(_context,ListDeviceActivity.class);
-//                startActivity(intent)
-            post_request();
+                //exec task register
+                new TaskRegister().execute(editText_email.getText().toString(), editText_pwd.getText().toString());
             }
         });
 
@@ -57,8 +81,44 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public void post_request(){
-        myAsyncTask myAsyncTask = new myAsyncTask();
-        myAsyncTask.execute();
+    public class TaskRegister extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            m_ProgresDialog = ProgressDialog.show(LoginActivity.this, "Please wait", "Login processing...", true);
+        }
+
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("email", params[0]);
+            postParam.put("password", params[1]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/login", postParam);
+                JSONObject jsonObject = new JSONObject(jsonString);
+                return jsonObject.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.RESULT_ERROR;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            m_ProgresDialog.dismiss();
+            if(integer == Common.RESULT_SUCCESS) {
+                Toast.makeText(LoginActivity.this, "Login success", Toast.LENGTH_LONG).show();
+                Intent i = new Intent();
+                //i.putExtra("username", txtUsername.getText().toString());
+                //i.putExtra("password", txtPassword1.getText().toString());
+                //setResult(1, i);
+                //finish();
+            } else if(integer == Common.RESULT_USER_NOT_EXISTS) {
+                Toast.makeText(LoginActivity.this, "User is not existed!", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(LoginActivity.this, "Login fail!", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }
