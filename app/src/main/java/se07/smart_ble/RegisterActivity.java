@@ -122,11 +122,7 @@ public class RegisterActivity extends AppCompatActivity {
             m_ProgresDialog.dismiss();
             if(integer == Common.RESULT_SUCCESS) {
                 Toast.makeText(RegisterActivity.this, "Registration success", Toast.LENGTH_LONG).show();
-                Intent i = new Intent();
-                //i.putExtra("username", txtUsername.getText().toString());
-                //i.putExtra("password", txtPassword1.getText().toString());
-                //setResult(1, i);
-                //finish();
+                finish();
             } else if(integer == Common.RESULT_USER_EXISTS) {
                 Toast.makeText(RegisterActivity.this, "Username is exists!", Toast.LENGTH_LONG).show();
             } else {

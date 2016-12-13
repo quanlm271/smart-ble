@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -25,11 +26,14 @@ import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Serializable.SerializableListLockData;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -41,6 +45,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private ProgressDialog m_ProgresDialog;
     private AccessServiceAPI m_AccessServiceAPI;
+
+    private JSONObject jsonData;
+    private List<LockData> lsLockData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,8 +64,12 @@ public class LoginActivity extends AppCompatActivity {
         // TextView
         textview_alertMessage = (TextView)findViewById(R.id.textView_loginAlert);
 
-        //
+        // AccessService
         m_AccessServiceAPI = new AccessServiceAPI();
+        // Json Object
+        jsonData = new JSONObject();
+        // List LockData object
+        lsLockData = new ArrayList<LockData>();
 
         //Buttons
         button_login = (Button)findViewById(R.id.button_login);
@@ -95,8 +106,8 @@ public class LoginActivity extends AppCompatActivity {
             postParam.put("password", params[1]);
             try{
                 String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/login", postParam);
-                JSONObject jsonObject = new JSONObject(jsonString);
-                return jsonObject.getInt("result");
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
             }catch (Exception e) {
                 e.printStackTrace();
                 return Common.RESULT_ERROR;
@@ -109,11 +120,22 @@ public class LoginActivity extends AppCompatActivity {
             m_ProgresDialog.dismiss();
             if(integer == Common.RESULT_SUCCESS) {
                 Toast.makeText(LoginActivity.this, "Login success", Toast.LENGTH_LONG).show();
-                Intent i = new Intent();
-                //i.putExtra("username", txtUsername.getText().toString());
-                //i.putExtra("password", txtPassword1.getText().toString());
-                //setResult(1, i);
-                //finish();
+                Intent i = new Intent(_context,ListDeviceActivity.class);
+                try {
+                    // get list of lock data
+                    JSONArray jsonArrayDevice = jsonData.getJSONArray("message");
+                    for (int index = 0; index < jsonArrayDevice.length(); index++) {
+                        JSONObject jsonDevice = jsonArrayDevice.getJSONObject(index);
+                        LockData lockData = new LockData(jsonDevice.getString("name"), jsonDevice.getString("mac"));
+                        lsLockData.add(lockData);
+                    }
+                    SerializableListLockData serializableListLockData = new SerializableListLockData(lsLockData);
+                    i.putExtra("ListLockData", serializableListLockData);
+                    startActivity(i);
+                    finish();
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
             } else if(integer == Common.RESULT_USER_NOT_EXISTS) {
                 Toast.makeText(LoginActivity.this, "User is not existed!", Toast.LENGTH_LONG).show();
             } else {

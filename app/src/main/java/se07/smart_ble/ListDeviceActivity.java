@@ -15,7 +15,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+
+import se07.smart_ble.Serializable.SerializableListLockData;
 
 public class ListDeviceActivity extends AppCompatActivity {
 
@@ -24,6 +30,9 @@ public class ListDeviceActivity extends AppCompatActivity {
 
     private ListView listView_listDevice;
     private ArrayAdapter adapter_listDevice;
+
+    // List LockData
+    private List<LockData> listLockData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,34 +43,36 @@ public class ListDeviceActivity extends AppCompatActivity {
 
         //List View
         listView_listDevice = (ListView)findViewById(R.id.listView_listDevice);
+        // List Lock Data
+        listLockData = new ArrayList<LockData>();
 
         //Adapter
-        String lock_01 = "LOCK 01 - MAC:A2-FC-79-6E-76-03";
-        String lock_02 = "LOCK 02 - MAC:80-E2-4C-5E-61-58";
-        String lock_03 = "LOCK 03 - MAC:B7-2A-E3-8B-8A-54";
+        //String lock_01 = "LOCK 01 - MAC:A2-FC-79-6E-76-03";
+        //String lock_02 = "LOCK 02 - MAC:80-E2-4C-5E-61-58";
+        //String lock_03 = "LOCK 03 - MAC:B7-2A-E3-8B-8A-54";
 
-        ArrayList<String> listDummyData = new ArrayList<String>();
-        listDummyData.add(lock_01);
-        listDummyData.add(lock_02);
-        listDummyData.add(lock_03);
-
-        adapter_listDevice =
-                new ArrayAdapter<String>(
-                        _context,
-                        android.R.layout.simple_list_item_1,
-                        listDummyData
-                        );
-
-        //Set data to listView
-        listView_listDevice.setAdapter(adapter_listDevice);
-
-        listView_listDevice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(_context, PinAccessActivity.class);
-                startActivity(intent);
+        try {
+            SerializableListLockData serializableListLockData = (SerializableListLockData) getIntent().getSerializableExtra("ListLockData");
+            List<LockData> listLockData = serializableListLockData.getListLockData();
+            ArrayList<String> listLabel = new ArrayList<String>();
+            for (LockData lockData : listLockData) {
+                String label = lockData.get_mName() + " - " + lockData.get_mMAC();
+                listLabel.add(label);
             }
-        });
+            // Adapter
+            adapter_listDevice = new ArrayAdapter<String>(_context, android.R.layout.simple_list_item_1, listLabel);
+            //Set data to listView
+            listView_listDevice.setAdapter(adapter_listDevice);
+            listView_listDevice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Intent intent = new Intent(_context, PinAccessActivity.class);
+                    startActivity(intent);
+                }
+            });
+        } catch (Exception e) {
+            Log.v("Exception", e.toString());
+        }
     }
 
     @Override
