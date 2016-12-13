@@ -38,7 +38,7 @@ public class PinAccessActivity extends AppCompatActivity {
     private ArrayList<TextView> arrayEditText = new ArrayList<TextView>();
 
     private mySerializable mSerializable;
-    private LockData mLockData;
+    private bleLockDevice mLockData;
 
     //demo code
     private int demoUID = 15;
@@ -51,7 +51,7 @@ public class PinAccessActivity extends AppCompatActivity {
         setTitle(_title);
 
         Intent intent = this.getIntent();
-        mSerializable = (mySerializable) intent.getSerializableExtra("mData");
+        mSerializable = (mySerializable) intent.getSerializableExtra(bleDefine.LOCK_DATA);
 
         if(mSerializable != null){
             mLockData = mSerializable.getLOCK();
@@ -90,12 +90,7 @@ public class PinAccessActivity extends AppCompatActivity {
                             countString++;
                             Log.d(_title,"PIN :" + _lockPIN);
                         }else{
-//                            for(TextView textView: arrayEditText){
-//                                textView.setText(null);
-//                            }
-//                            countString = 0;
-//                            _lockPIN = "";
-                            getPinData();
+                           byte[] bytePHash = getPHASH();
                         }
                         break;
 
@@ -103,41 +98,117 @@ public class PinAccessActivity extends AppCompatActivity {
             }
         });
     }
+
+    private byte[] getPHASH(){
+
+        byte[] preHash = get_preHash();
+        byte[] UserData = getUserData();
+        Log.d(_title,"PreHash: " + bleDefine.bytesToHex(preHash));
+        byte[] PHash = new byte[24];
+        int dif = PHash.length - UserData.length;
+        for(int i =0; i < preHash.length; i++)
+        {
+            PHash[i] = preHash[i];
+        }
+        for(int i = dif; i < 24; i++){
+            PHash[i] = UserData[i-dif];
+        }
+        Log.d(_title,"PHASH: " + bleDefine.bytesToHex(PHash));
+        return PHash;
+    }
+
+    private byte[] get_preHash() {
+        byte[] b_m_key = getPinHash();
+        byte[] b_m_data = getPinData();
+        aes.aes_enc_dec(b_m_data, b_m_key, (byte) 0);
+        Log.d(_title, "ENC: " + bleDefine.bytesToHex(b_m_data));
+        return b_m_data;
+    }
+
+    //Same in server
+    private byte[] getPinHash(){
+        byte[] bytePinHash = new byte[16];
+        byte[] bytePIN = _lockPIN.getBytes();
+
+        for(int i=0; i<4; i++ ){
+            bytePinHash[i*4]=bytePIN[i];
+        }
+
+        for(int i=0; i<16; i++){
+            if(i%4 != 0){
+                if(i%2 != 0)
+                    bytePinHash[i] = (byte)0x51; //Q
+                else
+                    bytePinHash[i] = (byte)0x53; //S
+            }
+        }
+
+        Log.d(_title,"PIN HASH: " + bleDefine.bytesToHex(bytePinHash));
+        return bytePinHash;
+    }
+
+    //P_DATA = 12 byte data + 4
     private byte[] getPinData(){
-        byte[] byteResult = new byte[20];
-        int index = 3;
-        //PIN
+        byte[] byteResult = new byte[16];
+        int index = 0;
+        //Command 2
+        byte[] byteCommand = bleDefine.hexToBytes(bleDefine.CMD_UNLOCK);
+        for(int i=0; i < 2; i++)
+            byteResult[index++]= byteCommand[i];
+
+        //PIN 4
         byte[] bytePIN = _lockPIN.getBytes();
         for(int i=0; i<4; i++ ){
             byteResult[index++]=bytePIN[i];
         }
 
-        for(int i = 0; i < 2; i++)
-        {
-            Random r = new Random();
-            int n = r.nextInt(255);
-            byteResult[index++]= (byte)n;
-        }
-        //MAC
-        byte[] byteMac = bleDefine.MacToBytes(mLockData.get_mMAC());
-        for(int i=0; i< byteMac.length; i++)
-        {
-            byteResult[index++] = byteMac[i];
-        }
-        //USer ID
+        //Random 4
+        byte[] byteRandom = getRandomBytes(4);
+        for(int i=0; i < 4; i++)
+            byteResult[index++]= byteRandom[i];
 
-        Log.d(_title,bleDefine.bytesToHex(byteResult));
-        return byteMac;
+        //SK 6
+        byte[] byteSK = bleDefine.hexToBytes(mLockData.ble_sk);
+        for(int i=0; i < byteSK.length; i++){
+            byteResult[index++] = byteSK[i];
+        }
+        Log.d(_title,"PIN DATA: " + bleDefine.bytesToHex(byteResult));
+        return byteResult;
     }
 
     private byte[] getUserData(){
-        byte[] byteUserData;
-        byte[] byteRandom;
-//        for(int i=0; i<4; i++)
-//        {
-//
-//        }
-        return null;
+
+        byte[] byteUserData = new byte[8];
+        int index=0;
+        if(mLockData == null){
+            return null;
+        }
+
+        //MAC 6
+        byte[] byteMac = bleDefine.MacToBytes(mLockData.ble_mac);
+        for(int i=0; i< byteMac.length; i++)
+        {
+            byteUserData[index++] = byteMac[i];
+        }
+
+        //UID 2
+        byte[] byteUID = bleDefine.hexToBytes("0010");
+        for(int i=0; i < byteUID.length; i++){
+            byteUserData[index++] = byteUID[i];
+        }
+        return byteUserData;
+    }
+
+    private byte[] getRandomBytes(int length){
+
+        byte[] byteResult = new byte[length];
+        for(int i = 0; i < length; i++)
+        {
+            Random r = new Random();
+            int n = r.nextInt(255);
+            byteResult[i]= (byte)n;
+        }
+        return byteResult;
     }
 }
 

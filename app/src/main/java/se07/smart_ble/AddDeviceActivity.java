@@ -31,10 +31,10 @@ public class AddDeviceActivity extends AppCompatActivity {
         textView_MAC = (TextView) findViewById(R.id.textView_MAC);
 
         if(mSerializable != null){
-            LockData mLockData = mSerializable.getLOCK();
+            bleLockDevice mLockData = mSerializable.getLOCK();
 //            Log.d(_title,bleDefine.bytesToHex(bleDefine.hexToBytes(mLockData.get_mMAC())));
-            textView_defaultName.setText(mLockData.get_mName());
-            textView_MAC.setText(mLockData.get_mMAC());
+            textView_defaultName.setText(mLockData.ble_name);
+            textView_MAC.setText(mLockData.ble_mac);
         }
     }
 }
