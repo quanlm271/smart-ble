@@ -128,7 +128,7 @@ app.post('/login', function(req, res) {
 					res.send(jsonRes);
 					return;
 				}
-				console.log(">> Total device: ", Object.keys(result).length);
+				console.log(">> Login, Total device: ", Object.keys(result).length);
 				jsonRes["result"] = 0;
 				jsonRes["message"] = JSON.parse(JSON.stringify(result));
 				res.send(jsonRes);
