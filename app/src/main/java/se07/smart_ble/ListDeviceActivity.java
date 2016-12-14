@@ -87,7 +87,7 @@ public class ListDeviceActivity extends AppCompatActivity {
         switch (item.getItemId()){
             case R.id.button_add_new_lock:
                 Log.d(_title,"Add new action");
-                Intent intent = new Intent(_context, ListNewDeviceActivity.class);
+                Intent intent = new Intent(_context, AddDeviceActivity.class);
                 startActivity(intent);
                 return true;
             default:
