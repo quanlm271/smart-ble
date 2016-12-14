@@ -19,7 +19,7 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".ListNewDeviceActivity"/>
+        <activity android:name=".LoginActivity"/>
         <activity android:name=".ListDeviceActivity" />
         <activity android:name=".AddDeviceActivity" />
         <activity android:name=".RegisterActivity" />
@@ -27,7 +27,7 @@
         <activity android:name=".CommandActivity" />
         <activity android:name=".ShareActivity" />
         <activity android:name=".HistoryActivity" />
-        <activity android:name=".LoginActivity">
+        <activity android:name=".ListNewDeviceActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

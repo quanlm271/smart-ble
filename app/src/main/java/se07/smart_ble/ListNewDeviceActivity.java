@@ -104,9 +104,9 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                 }
                 mLock = lock;
                 mService._connectToDevice(mLock);
-                LockData dLock = new LockData(mLock.ble_name, mLock.ble_mac);
-                Intent intent = new Intent(_context, AddDeviceActivity.class);
-                intent.putExtra("mData",new mySerializable(dLock));
+//                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
+                Intent intent = new Intent(_context, PinAccessActivity.class);
+                intent.putExtra(bleDefine.LOCK_DATA,new mySerializable(mLock));
                 startActivity(intent);
             }
         });
@@ -211,8 +211,8 @@ public class ListNewDeviceActivity extends AppCompatActivity {
             }
             if(action.equals(bleDefine.BLE_CONNECTED)){
                 mLock.sendCommand("00A0");
-                AlertDialog.Builder builder = new AlertDialog.Builder(_context);
-                builder.setTitle("Command");
+//                AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+//                builder.setTitle("Command");
 
 //                View viewInflated = LayoutInflater.from(_context).inflate(R.layout.action_dialog, null);
 //                // Set up the input
@@ -272,6 +272,24 @@ public class ListNewDeviceActivity extends AppCompatActivity {
 ////                });
 //
 //                builder.show();
+            }
+
+            if (action.equals(bleDefine.RECEIVED_SERVER_DATA))
+            {
+                Log.w(_TAG,"RECEIVED_SERVER_DATARECEIVED_SERVER_DATA");
+
+                String mac = intent.getStringExtra(bleDefine.MAC_ADDRESS);
+                bleLockDevice newLock = mService.listDevice.get(mac);
+
+                byte[] data = intent.getByteArrayExtra(bleDefine.EXTRA_DATA);
+                switch (data.length) {
+                    case 6:
+                        newLock.ble_sk = bleDefine.bytesToHex(data);
+                        break;
+                    default:
+                        break;
+                }
+                Log.w(_TAG, "DATA RECEIVED: " + bleDefine.bytesToHex(data));
             }
             //*********************//
         }

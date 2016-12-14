@@ -1,5 +1,6 @@
 package se07.smart_ble;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 /**
@@ -16,11 +17,11 @@ import java.util.UUID;
     public static final UUID STATE_CHAR_UUID = UUID.fromString("0000ffe1-0000-1000-8000-00805f9b34fb");
 
     //Command Define
-    public static final byte CMD_CONNECT        = (byte)0xA0;
-    public static final byte CMD_UNLOCK         = (byte)0xA1;
-    public static final byte CMD_LOCK           = (byte)0xA2;
-    public static final byte CMD_CHANGEPASS     = (byte)0xA3;
-    public static final byte CMD_RESET          = (byte)0xA4;
+    public static final String CMD_CONNECT        = "00A0";
+    public static final String CMD_UNLOCK         = "00A1";
+    public static final String CMD_LOCK           = "00A2";
+    public static final String CMD_CHANGEPASS     = "00A3";
+    public static final String CMD_RESET          = "00A4";
 
     //Bluetooth States
     public static final int STATE_DISCONNECTED = 0;
@@ -34,6 +35,7 @@ import java.util.UUID;
     public static final String ACTION_GATT_SERVICES_DISCOVERED     = "ACTION_GATT_SERVICES_DISCOVERED";
     public static final String ACTION_DATA_AVAILABLE               = "ACTION_DATA_AVAILABLE";
     public static final String EXTRA_DATA                          = "EXTRA_DATA";
+    public static final String LOCK_DATA                           = "LOCK_DATA";
     public static final String MAC_ADDRESS                         = "MAC_ADDRESS";
     public static final String INVALID_NOKE_DEVICE                 = "INVALID_NOKE_DEVICE";
     public static final String TX_NOTIFICATION_ENABLED             = "TX_NOTIFICATION_ENABLED";
@@ -85,5 +87,29 @@ import java.util.UUID;
         }
         return bytes;
     }
+
+    public static byte[] MacToBytes(String Mac){
+        String strMac = Mac.replace(":","");
+        byte[] byteMac = bleDefine.hexToBytes(strMac);
+        return byteMac;
+    }
+
+    public static void clearArray(byte[] data, int size){
+        for (int x = 0; x < size; x++)
+            data[x] = 0;
+    }
+//
+//    public static int addArray(byte[] dataOut,int outStartByte, byte[] dataIn, int inStartByte, int size) {
+//        if(dataOut.length<size+outStartByte)
+//            return -1;
+//        if(dataIn.length<size+inStartByte)
+//            return -1;
+//
+//        for (int x = 0; x < size; x++)
+//            dataOut[x+outStartByte] = dataIn[x+inStartByte];
+//
+//        return 0;
+//    }
+
 }
 

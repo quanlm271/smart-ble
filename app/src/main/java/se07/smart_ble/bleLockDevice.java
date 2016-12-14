@@ -10,8 +10,11 @@ import java.util.ArrayList;
  * Created by QuanLM on 06-Dec-16.
  */
 public class bleLockDevice {
+
     public String ble_mac;
     public String ble_name;
+    public String ble_sk;
+
     public int connectionState;
 
     public Context mContext;

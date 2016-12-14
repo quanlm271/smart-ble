@@ -396,16 +396,19 @@ public class bleLockService extends Service {
             bleLockDevice mLock = listDevice.get(gatt.getDevice().getAddress());
             byte[] data=characteristic.getValue();
 
+            Log.w(TAG, mLock.ble_mac);
+            //byte[] resultdata = new byte[20];
+            //bleDefine.copyArray(resultdata,0,data,0,20);
+            //Log.w(TAG,bleDefine.bytesToHex(resultdata));
+            broadcastUpdate(bleDefine.RECEIVED_SERVER_DATA, data, mLock.ble_mac);
+
 //
 //            byte destination = data[0];
 //            if(destination == bleDefine.SERVER_Dest)
 //            {
 //                //nokeServerSDK.RxDataFromLock(result);
 //
-//                byte resultdata[] = new byte[20];
-//                bleDefine.copyArray(resultdata,0,data,0,20);
 //
-//                broadcastUpdate(bleDefine.RECEIVED_SERVER_DATA, resultdata, noke.d_mac);
 //            }
 //            else if(destination==bleDefine.APP_Dest)
 //            {

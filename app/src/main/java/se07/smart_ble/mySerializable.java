@@ -7,14 +7,14 @@ import java.io.Serializable;
  */
 public class mySerializable implements Serializable {
 
-    private static LockData dLock;
+    private static bleLockDevice dLock;
     //private bleLockService mService;
 
-    public mySerializable(LockData lock){
+    public mySerializable(bleLockDevice lock){
         this.dLock = lock;
     }
 
-    public LockData getLOCK(){
+    public bleLockDevice getLOCK(){
         return dLock;
     }
 
