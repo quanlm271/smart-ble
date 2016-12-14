@@ -1,5 +1,8 @@
 // import module
 var mysql = require("mysql");
+//add enc
+var enc_dec = require('./enc_dec')
+
 // create a connection to the db
 var con = mysql.createConnection({
   host: "localhost",
@@ -26,7 +29,7 @@ var server = app.listen(8081, function () {
   var port = server.address().port;
 
   console.log("Example app listening at http://%s:%s", host, port)
-
+  enc_dec.create_pin_hash("01020304");
 })
 
 // json data to response
