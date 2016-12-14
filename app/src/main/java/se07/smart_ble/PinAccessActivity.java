@@ -131,10 +131,10 @@ public class PinAccessActivity extends AppCompatActivity {
         byte[] bytePIN = _lockPIN.getBytes();
 
         for(int i=0; i<4; i++ ){
-            bytePinHash[i]=bytePIN[i];
+            bytePinHash[i*4]=bytePIN[i];
         }
 
-        for(int i=4; i<16; i++){
+        for(int i=0; i<16; i++){
             if(i%4 != 0){
                 if(i%2 != 0)
                     bytePinHash[i] = (byte)0x51; //Q
