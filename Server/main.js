@@ -136,3 +136,43 @@ app.post('/login', function(req, res) {
 		}
 	});
 });
+
+var convertHex = require('convert-hex');
+app.post ('/converthex', function(req, res) {
+	res.contentType('application/json');
+	var hexData = req.body.string;
+	console.log(">> hex data: ", hexData);
+	var bytesData = convertHex.hexToBytes(hexData);
+	console.log(">> BytesData: ", bytesData);
+	var byteArrayMac = bytesData.splice(16, 6);
+	//console.log(">> byte array mac: ", byteArrayMac);
+	var mac = byteArray2Mac(byteArrayMac);
+	console.log(">> mac: ", mac);
+	var byteArrayUserId = bytesData.splice(22, 1);
+	console.log(">> byteArrayUserId: ", byteArrayUserId);
+	var user_id = convertHex.bytesToHex(byteArrayUserId);
+	console.log(user_id);
+});
+
+// convert byte array to character array
+function dec2String(array) {
+  var result = "";
+  for (var i = 0; i < array.length; i++) {
+    result += String.fromCharCode(array[i]);
+  }
+  return result;
+}
+
+// convert byte array to mac string
+function byteArray2Mac (byteArray) {
+	var result = "";
+	for (var i = 0; i < byteArray.length; i++) {
+		result += byteArray[i].toString(16);
+		if(i < byteArray.length - 1) {
+			result += ":";
+		}
+	}
+	return result;
+}
+
+// check if user onws the lock
