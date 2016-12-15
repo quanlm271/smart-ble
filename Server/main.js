@@ -159,6 +159,7 @@ app.post ('/converthex', function(req, res) {
 	var hexData = req.body.phash;
 	console.log(">> hex data: ", hexData);
 	var bytesData = convertHex.hexToBytes(hexData);
+	console.log(convertHex.bytesToHex(bytesData));
 	//console.log(">> BytesData: ", bytesData);
 	var byteArrayMac = bytesData.splice(16, 6);
 	//console.log(">> byte array mac: ", byteArrayMac);
@@ -184,6 +185,8 @@ app.post ('/converthex', function(req, res) {
 				jsonRes["result"] = parseInt(jsonConfig["user_owns_lock"]);
 				res.send(jsonRes);
 				console.log(">> User owns the lock");
+				// decryption
+				//var pin_pash = ;
 			}
 		}
 	});
@@ -202,7 +205,7 @@ function byteArray2String(array) {
 function byteArray2Mac (byteArray) {
 	var result = "";
 	for (var i = 0; i < byteArray.length; i++) {
-		result += byteArray[i].toString(16);
+		result += ("0" + byteArray[i].toString(16)).slice(-2);
 		if(i < byteArray.length - 1) {
 			result += ":";
 		}
@@ -210,3 +213,7 @@ function byteArray2Mac (byteArray) {
 	return result;
 }
 
+// generate pin hash
+function getPinHash (mac) {
+	
+}
