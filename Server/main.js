@@ -1,3 +1,13 @@
+var express = require('express');
+var bodyParser = require('body-parser')
+var app = express();
+app.use(bodyParser.json());
+var server = app.listen(8081, function () {
+  var host = server.address().address;
+  var port = server.address().port;
+  console.log(">> Example app listening at http://%s:%s", host, port)
+})
+
 // import module
 var mysql = require("mysql");
 // create a connection to the db
@@ -10,44 +20,39 @@ var con = mysql.createConnection({
 // connect
 con.connect(function(err){
   if(err){
-    console.log('Error connecting to Db');
+    console.log('>> Error connecting to Db');
     return;
   }
-  console.log('Connection established');
+  console.log('>> Connection established');
 });
 
-var express = require('express');
-var bodyParser = require('body-parser')
-var app = express();
-app.use(bodyParser.json());
-var server = app.listen(8081, function () {
-
-  var host = server.address().address;
-  var port = server.address().port;
-
-  console.log("Example app listening at http://%s:%s", host, port)
-
-})
+// read config json file
+var fs = require('fs');
+var configPath = "./Common/config.json";
+fs.readFile(configPath, 'utf8', function (err, data) {
+	if (err) throw err;
+	jsonConfig = JSON.parse(data);
+	console.log(">> Read config file successfully");
+});
 
 // json data to response
 var jsonRes = {};
 // On query data failed
 function OnDbErr (err) {
 	console.log(err);
-	jsonRes["result"] = 1;
-	jsonRes["message"] = "Fail to connect to database";
+	jsonRes["result"] = parseInt(jsonConfig["database_query_failed_code"]);
 }
 // On incorrect requested json format
 function OnDataIncorrect () {
 	console.log("Data is incorrect !");
-	jsonRes['result'] = 1;
-	jsonRes['message'] = "Data is incorrect";
+	jsonRes['result'] = parseInt(jsonConfig["incorrect_requested_format_json_code"]);
 }
 
 // Register
 app.post('/register', function(req, res) {
 	res.contentType('application/json');
 	
+	// check if incorrect requested json format
 	if(!req.body.hasOwnProperty("user_name") || !req.body.hasOwnProperty("email") 
 		|| !req.body.hasOwnProperty("password") ) {
 		OnDataIncorrect();
@@ -95,6 +100,7 @@ app.post('/register', function(req, res) {
 app.post('/login', function(req, res) {
 	res.contentType('application/json');
 	
+	// check if incorrect requested json format
 	if(!req.body.hasOwnProperty("email") || !req.body.hasOwnProperty("password") ) {
 		OnDataIncorrect();
 		res.send(jsonRes);
@@ -137,25 +143,54 @@ app.post('/login', function(req, res) {
 	});
 });
 
+//
 var convertHex = require('convert-hex');
 app.post ('/converthex', function(req, res) {
 	res.contentType('application/json');
-	var hexData = req.body.string;
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("phash")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	res.contentType('application/json');
+	var hexData = req.body.phash;
 	console.log(">> hex data: ", hexData);
 	var bytesData = convertHex.hexToBytes(hexData);
-	console.log(">> BytesData: ", bytesData);
+	//console.log(">> BytesData: ", bytesData);
 	var byteArrayMac = bytesData.splice(16, 6);
 	//console.log(">> byte array mac: ", byteArrayMac);
 	var mac = byteArray2Mac(byteArrayMac);
 	console.log(">> mac: ", mac);
-	var byteArrayUserId = bytesData.splice(22, 1);
-	console.log(">> byteArrayUserId: ", byteArrayUserId);
-	var user_id = convertHex.bytesToHex(byteArrayUserId);
-	console.log(user_id);
+	var byteArrayUserId = bytesData.splice(16, 2);
+	//console.log(">> byteArrayUserId: ", byteArrayUserId);
+	var user_id = parseInt(convertHex.bytesToHex(byteArrayUserId), 16);
+	console.log(">> UID: ", user_id);
+	
+	// get lock_id success
+	var where = [user_id, mac];
+	con.query("SELECT * FROM `owners` as o, `lock` as l WHERE o.lock_id = l.lock_id and  user_id = ? and mac = ?", where, function (err, result) {
+		if(err) {
+			OnDbErr(err);
+			return jsonConfig["database_query_failed_code"];
+		} else {
+			if(Object.keys(result).length == 0) {
+				jsonRes["result"] = parseInt(jsonConfig["user_not_owns_lock"]);
+				res.send(jsonRes);
+				console.log(">> User does not owns the lock");
+			} else {
+				jsonRes["result"] = parseInt(jsonConfig["user_owns_lock"]);
+				res.send(jsonRes);
+				console.log(">> User owns the lock");
+			}
+		}
+	});
 });
 
 // convert byte array to character array
-function dec2String(array) {
+function byteArray2String(array) {
   var result = "";
   for (var i = 0; i < array.length; i++) {
     result += String.fromCharCode(array[i]);
@@ -175,4 +210,3 @@ function byteArray2Mac (byteArray) {
 	return result;
 }
 
-// check if user onws the lock
