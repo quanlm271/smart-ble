@@ -111,7 +111,7 @@ public class RegisterActivity extends AppCompatActivity {
                 return jsonObject.getInt("result");
             }catch (Exception e) {
                 e.printStackTrace();
-                return Common.RESULT_ERROR;
+                return Common.exception_code;
             }
 
         }
@@ -120,10 +120,10 @@ public class RegisterActivity extends AppCompatActivity {
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
             m_ProgresDialog.dismiss();
-            if(integer == Common.RESULT_SUCCESS) {
+            if(integer == Common.user_register_success_code) {
                 Toast.makeText(RegisterActivity.this, "Registration success", Toast.LENGTH_LONG).show();
                 finish();
-            } else if(integer == Common.RESULT_USER_EXISTS) {
+            } else if(integer == Common.user_existing_code) {
                 Toast.makeText(RegisterActivity.this, "Username is exists!", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(RegisterActivity.this, "Registration fail!", Toast.LENGTH_LONG).show();

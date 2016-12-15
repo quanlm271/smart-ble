@@ -1,11 +1,12 @@
 {
-	"database_query_failed_code" : "1",
-	"incorrect_requested_format_json_code" : "2",
-	"user_existing_code" : "3",
-	"user_not_existing_code" : "4",
-	"user_register_success_code" : "5",
-	"login_success_code" : "6",
-	"user_not_owns_lock" : "7",
-	"user_owns_lock" : "8",
-	"lock_not_exist" : "9"
+	"database_query_failed_code" : 1,
+	"incorrect_requested_format_json_code" : 2,
+	"user_existing_code" : 3,
+	"user_not_existing_code" : 4,
+	"user_register_success_code" : 5,
+	"login_success_code" : 6,
+	"user_not_owns_lock" : 7,
+	"user_owns_lock" : 8,
+	"lock_not_exist" : 9,
+	"result_success" : 10
 }

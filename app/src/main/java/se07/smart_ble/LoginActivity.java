@@ -78,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //exec task register
-                new TaskRegister().execute(editText_email.getText().toString(), editText_pwd.getText().toString());
+                new TaskLogin().execute(editText_email.getText().toString(), editText_pwd.getText().toString());
             }
         });
 
@@ -92,7 +92,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public class TaskRegister extends AsyncTask<String, Void, Integer> {
+    public class TaskLogin extends AsyncTask<String, Void, Integer> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -110,7 +110,7 @@ public class LoginActivity extends AppCompatActivity {
                 return jsonData.getInt("result");
             }catch (Exception e) {
                 e.printStackTrace();
-                return Common.RESULT_ERROR;
+                return Common.exception_code;
             }
         }
 
@@ -118,25 +118,28 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
             m_ProgresDialog.dismiss();
-            if(integer == Common.RESULT_SUCCESS) {
+            if(integer == Common.login_success_code) {
                 Toast.makeText(LoginActivity.this, "Login success", Toast.LENGTH_LONG).show();
                 Intent i = new Intent(_context,ListDeviceActivity.class);
                 try {
                     // get list of lock data
-                    JSONArray jsonArrayDevice = jsonData.getJSONArray("message");
-                    for (int index = 0; index < jsonArrayDevice.length(); index++) {
-                        JSONObject jsonDevice = jsonArrayDevice.getJSONObject(index);
-                        LockData lockData = new LockData(jsonDevice.getString("name"), jsonDevice.getString("mac"));
-                        lsLockData.add(lockData);
-                    }
-                    SerializableListLockData serializableListLockData = new SerializableListLockData(lsLockData);
-                    i.putExtra("ListLockData", serializableListLockData);
+                    //JSONArray jsonArrayDevice = jsonData.getJSONArray("message");
+                    //for (int index = 0; index < jsonArrayDevice.length(); index++) {
+                    //    JSONObject jsonDevice = jsonArrayDevice.getJSONObject(index);
+                    //    LockData lockData = new LockData(jsonDevice.getString("name"), jsonDevice.getString("mac"));
+                    //    lsLockData.add(lockData);
+                    //}
+                    //SerializableListLockData serializableListLockData = new SerializableListLockData(lsLockData);
+
+                    // get user id
+                    int userId = jsonData.getInt("uid");
+                    i.putExtra("user_id", userId);
                     startActivity(i);
                     finish();
                 } catch (Exception e) {
                     Log.v("Exception", e.toString());
                 }
-            } else if(integer == Common.RESULT_USER_NOT_EXISTS) {
+            } else if(integer == Common.user_not_existing_code) {
                 Toast.makeText(LoginActivity.this, "User is not existed!", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(LoginActivity.this, "Login fail!", Toast.LENGTH_LONG).show();
