@@ -252,7 +252,7 @@ app.post ('/LoadDevice', function(req, res) {
 			return;
 		}
 		var lockData = JSON.parse(JSON.stringify(result));
-		console.log(">> Load device, Object.keys(lockData).length");
+		console.log(">> Load device: ", Object.keys(lockData).length);
 		jsonRes["result"] = jsonConfig["result_success"];
 		jsonRes["data"] = lockData;
 		jsonRes["total"] = Object.keys(lockData).length;
