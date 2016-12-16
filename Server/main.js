@@ -86,7 +86,7 @@ app.post('/register', function(req, res) {
 				return;
 			  }
 
-			  console.log('>> Last insert ID: ', result.insertId);
+			  console.log('>> Register, last inserted ID: ', result.insertId);
 			  jsonRes["result"] = jsonConfig["user_register_success_code"];
 			  res.send(jsonRes);
 			});
@@ -144,6 +144,7 @@ app.post('/login', function(req, res) {
 					res.send(jsonRes);
 					return;
 				}
+				console.log(">> Login success");
 				jsonRes["result"] = jsonConfig["login_success_code"];
 				jsonRes["uid"] = result[0]["user_id"];
 				res.send(jsonRes);
@@ -252,10 +253,41 @@ app.post ('/LoadDevice', function(req, res) {
 			return;
 		}
 		var lockData = JSON.parse(JSON.stringify(result));
-		console.log(">> Load device: ", Object.keys(lockData).length);
+		console.log(">> Load device, total ", Object.keys(lockData).length);
 		jsonRes["result"] = jsonConfig["result_success"];
 		jsonRes["data"] = lockData;
 		jsonRes["total"] = Object.keys(lockData).length;
 		res.send(jsonRes);
+	});
+});
+
+// Add Device
+app.post ('/AddDevice', function(req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("name") || !req.body.hasOwnProperty("name")
+		|| !req.body.hasOwnProperty("pin") || !req.body.hasOwnProperty("uid")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	var status = req.body.hasOwnProperty("status") ? req.body.status : "inactive";
+	var set = [req.body.mac.toUpperCase(), req.body.name, req.body.pin, status];
+	con.query("insert into `lock` set mac = ?, name = ?, pin = ?, status = ?", set, function (err, result) {
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		console.log('>> Add Device, last inserted ID: ', result.insertId);
+		var type = req.body.hasOwnProperty("type") ? req.body.type : "root";
+		set = [req.body.uid, result.insertId, type];
+		con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?", set, function (err, result) {
+			console.log(">> Add Device, Add Owner success");
+			jsonRes["result"] = jsonConfig["result_success"];
+			res.send(jsonRes);
+		});
 	});
 });
