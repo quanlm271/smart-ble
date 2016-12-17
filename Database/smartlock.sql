@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 13, 2016 at 11:13 AM
+-- Generation Time: Dec 17, 2016 at 04:44 PM
 -- Server version: 10.1.13-MariaDB
 -- PHP Version: 5.6.23
 
@@ -30,7 +30,7 @@ CREATE TABLE `lock` (
   `lock_id` int(11) NOT NULL,
   `mac` varchar(20) NOT NULL,
   `name` varchar(11) NOT NULL,
-  `password` varchar(11) NOT NULL,
+  `pin` varchar(11) NOT NULL,
   `status` enum('active','inactive','dead') NOT NULL DEFAULT 'inactive'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -38,12 +38,15 @@ CREATE TABLE `lock` (
 -- Dumping data for table `lock`
 --
 
-INSERT INTO `lock` (`lock_id`, `mac`, `name`, `password`, `status`) VALUES
-(1, '00:04:ff:ff:ff:d0', 'lock_1', '1234', 'active'),
+INSERT INTO `lock` (`lock_id`, `mac`, `name`, `pin`, `status`) VALUES
+(1, '00:04:ff:ff:ff:d0', 'lock_1', '01020304', 'active'),
 (2, 'ec:1a:59:61:07:b2', 'lock_2', '3444', 'active'),
 (3, '90:59:af:3d:6d:bc', 'lock_3', '5555', 'active'),
 (4, '3c:97:0e:48:22:12', 'lock_4', '3423', 'active'),
-(5, '00:18:31:87:8f:b0', 'lock_5', '4567', 'active');
+(5, '00:18:31:87:8f:b0', 'lock_5', '4567', 'active'),
+(6, '80-E2-4C-5E-61-58', 'lock_06', '5432', 'active'),
+(8, '88:C2:55:12:34:5A', 'lock_07', '1234', 'active'),
+(18, '87:C2:54:12:34:5A', 'lock_09', '01020304', 'active');
 
 -- --------------------------------------------------------
 
@@ -65,7 +68,9 @@ INSERT INTO `owners` (`user_id`, `lock_id`, `user_type`) VALUES
 (12, 1, 'root'),
 (12, 2, 'root'),
 (12, 3, 'owner'),
-(12, 5, 'owner');
+(12, 5, 'owner'),
+(5, 18, 'root'),
+(5, 2, 'owner');
 
 -- --------------------------------------------------------
 
@@ -91,7 +96,11 @@ INSERT INTO `users` (`user_id`, `user_name`, `email`, `password`) VALUES
 (12, 'sang8', 'sang@email', 'sang'),
 (15, 'c', 'cc', 'ccc'),
 (19, 'aa', 'aaa', 'aaa'),
-(20, 'sang9', 'sang9@email', 'sang');
+(20, 'sang9', 'sang9@email', 'sang'),
+(21, 'sang10', 'sang@gmail', 'sang'),
+(22, 'sang11', 'sang11@email', 'sang'),
+(23, 'sang12', 'sang12@email', 'sang'),
+(24, 'sang15', 'sang15@email', 'sang');
 
 --
 -- Indexes for dumped tables
@@ -119,12 +128,12 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `lock`
 --
 ALTER TABLE `lock`
-  MODIFY `lock_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `lock_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

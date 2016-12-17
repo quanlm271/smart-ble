@@ -204,6 +204,7 @@ app.post ('/converthex', function(req, res) {
 					OnDbErr(err);
 					res.send(jsonRes);
 					return;
+					return;
 				}
 				
 				var pinHex = result[0]["pin"];
@@ -289,5 +290,29 @@ app.post ('/AddDevice', function(req, res) {
 			jsonRes["result"] = jsonConfig["result_success"];
 			res.send(jsonRes);
 		});
+	});
+});
+
+// Get current owners of lock
+app.post ('/GetOwners', function(req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("mac")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	con.query("select u.user_id, u.user_name, u.email from owners as o INNER JOIN users as u on o.user_id = u.user_id LEFT JOIN `lock` as l on o.lock_id = l.lock_id where l.mac = ?", req.body.mac, function (err, result) {
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		console.log(">> Get Owners, total: ", Object.keys(result).length);
+		jsonRes["result"] = jsonConfig["result_success"];
+		jsonRes["data"] = JSON.parse(JSON.stringify(result));
+		res.send(jsonRes);
 	});
 });

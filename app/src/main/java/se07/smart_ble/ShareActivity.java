@@ -2,8 +2,11 @@ package se07.smart_ble;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,7 +21,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import se07.smart_ble.API.AccessServiceAPI;
+import se07.smart_ble.API.Common;
 
 public class ShareActivity extends AppCompatActivity {
 
@@ -34,6 +45,12 @@ public class ShareActivity extends AppCompatActivity {
 
     private static final String[] array_typeAccess = new String[]{"Owner", "Root"};
 
+    private ProgressDialog m_ProgresDialog;
+    private AccessServiceAPI m_AccessServiceAPI;
+    private JSONObject jsonData;
+
+    private Intent intent = this.getIntent();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,14 +62,17 @@ public class ShareActivity extends AppCompatActivity {
         textView_result01 = (TextView) findViewById(R.id.textView_searchResult01);
         textView_result02 = (TextView) findViewById(R.id.textView_searchResult02);
 
-        //Dummy data
-        String[] dummy_data = new String[]{"user_01@example.com", "anivia@lol.com", "vayne@master.com"};
-        ArrayAdapter<String> arrayAdapter =
-                new ArrayAdapter<String>(
-                        _context,
-                        android.R.layout.simple_list_item_1,
-                        dummy_data);
-        listView_currentUser.setAdapter(arrayAdapter);
+        // AccessService
+        m_AccessServiceAPI = new AccessServiceAPI();
+        // Json Object
+        jsonData = new JSONObject();
+
+        // 1. get lock id
+        //String mac = intent.getStringExtra("mac");
+        // 2. task get current owners excute
+        // new TaskGetCurrentOwners().execute(mac);
+        // demo
+        new TaskGetCurrentOwners().execute("ec:1a:59:61:07:b2");
 
         button_search.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -193,5 +213,55 @@ public class ShareActivity extends AppCompatActivity {
             }
         });
         dialog.show();
+    }
+
+    public class TaskGetCurrentOwners extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            m_ProgresDialog = ProgressDialog.show(ShareActivity.this, "Please wait", "Get owner processing...", true);
+        }
+
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("mac", params[0]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/GetOwners", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            m_ProgresDialog.dismiss();
+            if(integer == Common.result_success) {
+                Toast.makeText(ShareActivity.this, "Get owners success", Toast.LENGTH_LONG).show();
+                try {
+                    ArrayList<String> dummy_data = new ArrayList<String>();
+                    // get list owners
+                    JSONArray jsonArrayOwner = jsonData.getJSONArray("data");
+                    for (int index = 0; index < jsonArrayOwner.length(); index++) {
+                        JSONObject jsonOwner = jsonArrayOwner.getJSONObject(index);
+                        dummy_data.add(jsonOwner.getString("email"));
+                    }
+                    ArrayAdapter<String> arrayAdapter =
+                            new ArrayAdapter<String>(
+                                    _context,
+                                    android.R.layout.simple_list_item_1,
+                                    dummy_data);
+                    listView_currentUser.setAdapter(arrayAdapter);
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else {
+                Toast.makeText(ShareActivity.this, "Get Owners fail!", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }
