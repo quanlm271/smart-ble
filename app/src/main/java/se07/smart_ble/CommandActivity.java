@@ -9,41 +9,73 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.Serializable;
+
+import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
+import se07.smart_ble.Serializable.mySerializable;
 
 public class CommandActivity extends AppCompatActivity {
 
     private Context _context = this;
+
+    // Intent
+    private Intent intent;
+
+    // Title
     private String _TITLE = "LOCK DEMO";
 
-    private Button  button_unlock,
-                    button_share,
-                    button_history,
-                    button_changePass,
-                    button_infomation;
+    // Views
+    private Button  button_unlock, button_share, button_history, button_changePass, button_infomation;
+
+
+    // Models
+    private UserData userData;
+    private LockData lockData;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_command);
 
+        // Set title
         setTitle(_TITLE);
 
+        // get intent
+        intent = this.getIntent();
+
+        // get Views
         button_share = (Button) findViewById(R.id.button_share);
         button_history = (Button) findViewById(R.id.button_history);
         button_changePass = (Button) findViewById(R.id.button_changePass);
         button_infomation = (Button) findViewById(R.id.button_information);
 
+        // Initiate Models
+        userData = new UserData();
+        lockData = new LockData();
+
+        // Load Models
+        Serializable serial = intent.getSerializableExtra("myserial");
+        if(serial != null) {
+            mySerializable originMySerial = (mySerializable) serial;
+            userData = originMySerial.getUserData();
+            lockData = originMySerial.getLockData();
+        }
+
         button_share.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(_context, ShareActivity.class);
-                startActivity(intent);
+                Intent i = new Intent(_context, ShareActivity.class);
+                mySerializable desMySerial = new mySerializable();
+                desMySerial.setUserData(userData);
+                desMySerial.setLockData(lockData);
+                i.putExtra("myserial", desMySerial);
+                startActivity(i);
             }
         });
 

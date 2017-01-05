@@ -2,7 +2,8 @@ package se07.smart_ble.API;
 
 import android.widget.EditText;
 
-import java.util.Arrays;
+import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
 
 /**
  * Created by SangPham on 12/12/2016.
@@ -10,7 +11,8 @@ import java.util.Arrays;
 
 public class Common {
     //static final String SERVICE_API_URL = "http://192.168.137.1:8081/register";
-    public static final String SERVICE_API_URL = "http://10.0.2.2:8081";
+    //public static final String SERVICE_API_URL = "http://10.0.2.2:8081";
+    public static final String SERVICE_API_URL = "http://192.168.1.128:8081";
     public static final int exception_code = 0;
     public static final int database_query_failed_code = 1;
     public static final int incorrect_requested_format_json_code = 2;
@@ -41,5 +43,21 @@ public class Common {
         return hex;
     }
 
+    // Tạo data user mẫu, set các trường phù hợp với dữ liệu muốn tạo.
+    public static UserData GenerateUserData() {
+        UserData userData = new UserData();
+        userData.setEmail("feeder@email");
+        userData.setName("MasterYi");
+        userData.setPwd("Pentakill");
+        return userData;
+    }
 
+    // Tạo lock data mẫu.
+    public static LockData GenerateLockData() {
+        LockData lockData = new LockData();
+        lockData.setMac("ec:1a:59:61:07:b2");
+        lockData.setName("LOCK 01");
+
+        return lockData;
+    }
 }

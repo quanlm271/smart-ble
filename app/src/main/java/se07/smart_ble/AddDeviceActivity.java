@@ -20,6 +20,7 @@ import java.util.Map;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Serializable.mySerializable;
 
 public class AddDeviceActivity extends AppCompatActivity {
 

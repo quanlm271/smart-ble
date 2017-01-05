@@ -2,34 +2,31 @@ package se07.smart_ble;
 
 import android.content.Context;
 import android.content.Intent;
-import android.inputmethodservice.Keyboard;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.InputType;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.TextView;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+
+import se07.smart_ble.API.Common;
+import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
+import se07.smart_ble.Serializable.mySerializable;
 
 
 public class PinAccessActivity extends AppCompatActivity {
 
     public Context _context = this;
+    private Intent intent;
     private String _title = "PIN Access";
-    private TextView    textView_num1,
-                        textView_num2,
-                        textView_num3,
-                        textView_num4;
+    private TextView    textView_num1, textView_num2, textView_num3, textView_num4;
     private String _keyboard[]= {"1","2","3","4","5","6","7","8","9","BACK","0", ""};
     private int _maxsize = 4;
     private int countString = 0;
@@ -37,8 +34,10 @@ public class PinAccessActivity extends AppCompatActivity {
     private GridView gridView_keyboard;
     private ArrayList<TextView> arrayEditText = new ArrayList<TextView>();
 
-    private mySerializable mSerializable;
+    // Models object
     private bleLockDevice mLockData;
+    private LockData lockData;
+    private UserData userData;
 
     //demo code
     private int demoUID = 15;
@@ -48,15 +47,33 @@ public class PinAccessActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pin_access);
 
+        // Set title
         setTitle(_title);
 
-        Intent intent = this.getIntent();
-        mSerializable = (mySerializable) intent.getSerializableExtra(bleDefine.LOCK_DATA);
+        // get intent
+        intent = this.getIntent();
 
-        if(mSerializable != null){
-            mLockData = mSerializable.getLOCK();
+        // Load Models Object
+        // mySerializable mSerializable = (mySerializable) intent.getSerializableExtra("serial");
+        //if(intent == null) {
+        //    Log.v("PinAccess, intent", intent.toString());
+        //}
+
+        // Initiate models
+        this.mLockData = new bleLockDevice();
+        this.lockData = Common.GenerateLockData();
+        this.userData = Common.GenerateUserData();
+
+        // Load Models
+        Serializable serializable = intent.getSerializableExtra("myserial");
+        if(serializable != null) {
+            mySerializable originMySerial = (mySerializable)serializable;
+            this.mLockData = originMySerial.getLOCK();
+            this.lockData = originMySerial.getLockData();
+            this.userData = originMySerial.getUserData();
         }
 
+        // initiate textview digits
         textView_num1 = (TextView)findViewById(R.id.textView_num1);
         textView_num2 = (TextView)findViewById(R.id.textView_num2);
         textView_num3 = (TextView)findViewById(R.id.textView_num3);
@@ -77,8 +94,13 @@ public class PinAccessActivity extends AppCompatActivity {
                 String keyVal = _keyboard[position];
                 switch (keyVal){
                     case "":
-                        Intent intent = new Intent(_context, CommandActivity.class);
-                        startActivity(intent);
+                        Intent i = new Intent(_context, CommandActivity.class);
+                        mySerializable desMySerial = new mySerializable();
+                        desMySerial.setLockData(lockData);
+                        desMySerial.setUserData(userData);
+                        desMySerial.setBleLockDevice(mLockData);
+                        i.putExtra("myserial", desMySerial);
+                        startActivity(i);
                         break;
                     case "BACK":
                         finish();

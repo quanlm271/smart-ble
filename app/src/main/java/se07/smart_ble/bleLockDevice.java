@@ -31,6 +31,11 @@ public class bleLockDevice {
         ble_mac = address;
     }
 
+    public bleLockDevice() {
+        ble_name = "";
+        ble_mac = "";
+    }
+
     @Override
     public String toString() {
         return this.ble_name + " ("+ this.ble_mac+")";

@@ -138,7 +138,7 @@ app.post('/login', function(req, res) {
 			//	//jsonRes["message"] = JSON.parse(JSON.stringify(result));
 			//	res.send(jsonRes);
 			//});
-			con.query("select user_id from users where email = ?", req.body.email, function (req, result) {
+			con.query("select user_id, user_name from users where email = ?", req.body.email, function (req, result) {
 				if(err) {
 					OnDbErr(err);
 					res.send(jsonRes);
@@ -147,6 +147,7 @@ app.post('/login', function(req, res) {
 				console.log(">> Login success");
 				jsonRes["result"] = jsonConfig["login_success_code"];
 				jsonRes["uid"] = result[0]["user_id"];
+				jsonRes["user_name"] = result[0]["user_name"];
 				res.send(jsonRes);
 			});
 		}
@@ -267,8 +268,7 @@ app.post ('/AddDevice', function(req, res) {
 	res.contentType('application/json');
 	
 	// check if incorrect requested json format
-	if(!req.body.hasOwnProperty("name") || !req.body.hasOwnProperty("name")
-		|| !req.body.hasOwnProperty("pin") || !req.body.hasOwnProperty("uid")) {
+	if(!req.body.hasOwnProperty("name")|| !req.body.hasOwnProperty("pin") || !req.body.hasOwnProperty("uid")) {
 		OnDataIncorrect();
 		res.send(jsonRes);
 		return;
@@ -316,3 +316,66 @@ app.post ('/GetOwners', function(req, res) {
 		res.send(jsonRes);
 	});
 });
+
+// API Search User
+app.post ('/SearchUser', function(req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("info")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	var like = '%' + req.body.info + '%';
+	con.query("SELECT u.user_id, u.user_name, u.email FROM `users` as u WHERE u.email LIKE ? LIMIT 2", like, function (err, result) {
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		console.log(">> Search user, result: ", result);
+		jsonRes["result"] = jsonConfig["result_success"];
+		jsonRes["data"] = JSON.parse(JSON.stringify(result));
+		res.send(jsonRes);
+	});
+});
+
+// API: Add Owner & Lock
+app.post('/AddOwner', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("email") || !req.body.hasOwnProperty("mac") || !req.body.hasOwnProperty("type")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	var where = [req.body.email, req.body.mac];
+	con.query("select o.user_type, u.user_id, u.email, l.lock_id, l.mac from owners as o INNER JOIN users as u on o.user_id = u.user_id LEFT JOIN `lock` as l on o.lock_id = l.lock_id where u.email = ? and l.mac = ?", where, function (err, result) {
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		if(Object.keys(result).length > 0) {
+			console.log(">> Add Owner failed, Owner owned the lock");
+			jsonRes["result"] = jsonConfig["user_owns_lock"];
+			res.send(jsonRes);
+		} else {
+			con.query("SELECT user_id FROM `users` where email = ?", req.body.email, function (err, result) {
+				var user_id = result[0]["user_id"];
+				con.query("SELECT lock_id FROM `lock` WHERE mac = ?", req.body.mac, function (err, result) {
+					var lock_id = result[0]["lock_id"];
+					var set = [user_id, lock_id, req.body.type];
+					con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?", set, function (err, result) {
+						console.log(">> Add Owner success");
+						jsonRes["result"] = jsonConfig["result_success"];
+						res.send(jsonRes);
+					});
+				});
+			});
+		}
+	});
+});
+

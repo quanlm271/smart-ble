@@ -1,9 +1,6 @@
 package se07.smart_ble.Models;
 
 import java.util.ArrayList;
-import java.util.concurrent.locks.Lock;
-
-import se07.smart_ble.LockData;
 
 /**
  * Created by SangPham on 12/16/2016.

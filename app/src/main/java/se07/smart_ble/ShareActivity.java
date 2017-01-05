@@ -1,7 +1,6 @@
 package se07.smart_ble;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,17 +23,24 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
+import se07.smart_ble.Serializable.mySerializable;
 
 public class ShareActivity extends AppCompatActivity {
 
     private Context _context = this;
     private String _TITLE = "SHARE MANAGEMENT";
+
+    // intent
+    private Intent intent;
 
     private ArrayList<String> listCurrentUser = new ArrayList<String>();
 
@@ -49,13 +55,24 @@ public class ShareActivity extends AppCompatActivity {
     private AccessServiceAPI m_AccessServiceAPI;
     private JSONObject jsonData;
 
-    private Intent intent = this.getIntent();
+    // Dialog add new owner
+    private AlertDialog dialogAddOwner;
+    private TextView dgAddOwner_TextView_email;
+    private Spinner dgAddOwner_Spinner_type;
+
+    // Models
+    private UserData userData;
+    private LockData lockData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_share);
 
+        // get intent
+        intent = this.getIntent();
+
+        // Set view
         button_search = (Button) findViewById(R.id.button_search);
         editText_search = (EditText) findViewById(R.id.editText_search);
         listView_currentUser = (ListView) findViewById(R.id.listView_currentOwner);
@@ -67,17 +84,30 @@ public class ShareActivity extends AppCompatActivity {
         // Json Object
         jsonData = new JSONObject();
 
-        // 1. get lock id
+        // Initiate Models
+        userData = new UserData();
+        lockData = new LockData();
+
+        // Load models
+        Serializable serial = intent.getSerializableExtra("myserial");
+        if(serial != null) {
+            mySerializable originMySerial = (mySerializable) serial;
+            userData = originMySerial.getUserData();
+            lockData = originMySerial.getLockData();
+        }
+
+
+        // 1. get mac address
         //String mac = intent.getStringExtra("mac");
         // 2. task get current owners excute
         // new TaskGetCurrentOwners().execute(mac);
         // demo
-        new TaskGetCurrentOwners().execute("ec:1a:59:61:07:b2");
+        new TaskGetCurrentOwners().execute(lockData.get_mMAC());
 
         button_search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                new TaskSearchUser().execute(editText_search.getText().toString());
             }
         });
 
@@ -91,14 +121,14 @@ public class ShareActivity extends AppCompatActivity {
         textView_result01.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showDialog_addNew();
+                showDialog_addNew(textView_result01.getText().toString());
             }
         });
 
         textView_result02.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                showDialog_addNew(textView_result02.getText().toString());
             }
         });
     }
@@ -176,32 +206,31 @@ public class ShareActivity extends AppCompatActivity {
 
     }
 
-    private void showDialog_addNew(){
+    private void showDialog_addNew(final String newEmail){
         AlertDialog.Builder builder = new AlertDialog.Builder(_context);
-        builder.setTitle("Add new owner - LOCK 01");
+        builder.setTitle("Add new owner - " + lockData.get_mName());
 
         View viewInflated = LayoutInflater.from(_context).inflate(R.layout.dialog_add_new_owner, null);
 
         builder.setView(viewInflated);
-        final Spinner spinner_typeAccess = (Spinner) viewInflated.findViewById(R.id.spinner_typeAccess);
+        dgAddOwner_Spinner_type = (Spinner) viewInflated.findViewById(R.id.spinner_typeAccess);
+        dgAddOwner_TextView_email = (TextView)  viewInflated.findViewById(R.id.textView_userEmail);
         ArrayAdapter<String> adapter =
                 new ArrayAdapter<String>(
                         _context,
                         android.R.layout.simple_spinner_dropdown_item,
                         array_typeAccess);
-        spinner_typeAccess.setAdapter(adapter);
+        dgAddOwner_Spinner_type.setAdapter(adapter);
+        dgAddOwner_TextView_email.setText(newEmail);
 
-        final AlertDialog dialog = builder.create();
+        dialogAddOwner = builder.create();
 
         //Remove Button
         Button button_addSave = (Button) viewInflated.findViewById(R.id.button_addSave);
         button_addSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(_TITLE,"SAVED!!!");
-                Toast.makeText(_context, "Saved Successfully!",
-                        Toast.LENGTH_LONG).show();
-                dialog.dismiss();
+                new TaskShare().execute(newEmail, lockData.get_mMAC(), dgAddOwner_Spinner_type.getSelectedItem().toString());
             }
         });
 
@@ -209,10 +238,10 @@ public class ShareActivity extends AppCompatActivity {
         button_addCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dialog.dismiss();
+                dialogAddOwner.dismiss();
             }
         });
-        dialog.show();
+        dialogAddOwner.show();
     }
 
     public class TaskGetCurrentOwners extends AsyncTask<String, Void, Integer> {
@@ -261,6 +290,95 @@ public class ShareActivity extends AppCompatActivity {
                 }
             } else {
                 Toast.makeText(ShareActivity.this, "Get Owners fail!", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    public class TaskSearchUser extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("info", params[0]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/SearchUser", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.result_success) {
+                try {
+                    textView_result01.setVisibility(View.GONE);
+                    textView_result02.setVisibility(View.GONE);
+                    ArrayList<String> dummy_data = new ArrayList<String>();
+                    // get list owners
+                    JSONArray jsonArrayOwner = jsonData.getJSONArray("data");
+                    for (int index = 0; index < jsonArrayOwner.length(); index++) {
+                        JSONObject jsonOwner = jsonArrayOwner.getJSONObject(index);
+                        if(index == 0) {
+                            textView_result01.setVisibility(View.VISIBLE);
+                            textView_result01.setText(jsonOwner.getString("email"));
+                        }
+                        if(index == 1) {
+                            textView_result02.setVisibility(View.VISIBLE);
+                            textView_result02.setText(jsonOwner.getString("email"));
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else {
+                textView_result01.setVisibility(View.GONE);
+                textView_result02.setVisibility(View.GONE);
+                Toast.makeText(ShareActivity.this, "Search users fail!", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    public class TaskShare extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("email", params[0]);
+            postParam.put("mac", params[1]);
+            postParam.put("type", params[2]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/AddOwner", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.result_success) {
+                try {
+                    Log.d(_TITLE,"SAVED!!!");
+                    Toast.makeText(_context, "Saved Successfully!",
+                            Toast.LENGTH_LONG).show();
+                    dialogAddOwner.dismiss();
+                    // load lại list current owner
+                    new TaskGetCurrentOwners().execute(lockData.get_mMAC());
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else {
+                if(integer == Common.user_owns_lock) {
+                    Toast.makeText(ShareActivity.this, "User has owned the lock!", Toast.LENGTH_LONG).show();
+                    dialogAddOwner.dismiss();
+                } else {
+                    Toast.makeText(ShareActivity.this, "Share owner fail!", Toast.LENGTH_LONG).show();
+                    dialogAddOwner.dismiss();
+                }
             }
         }
     }

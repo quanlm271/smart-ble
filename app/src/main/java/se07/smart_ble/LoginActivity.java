@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,17 +14,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.CookiePolicy;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +23,9 @@ import java.util.Map;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
-import se07.smart_ble.Serializable.SerializableListLockData;
+import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
+import se07.smart_ble.Serializable.mySerializable;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -48,6 +40,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private JSONObject jsonData;
     private List<LockData> lsLockData;
+
+    // Models
+    UserData userData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +66,9 @@ public class LoginActivity extends AppCompatActivity {
         // List LockData object
         lsLockData = new ArrayList<LockData>();
 
+        // Initiate models
+        userData = new UserData();
+
         //Buttons
         button_login = (Button)findViewById(R.id.button_login);
 
@@ -78,7 +76,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //exec task register
-                new TaskLogin().execute(editText_email.getText().toString(), editText_pwd.getText().toString());
+                userData.setEmail(editText_email.getText().toString());
+                userData.setPwd(editText_pwd.getText().toString());
+                new TaskLogin().execute(userData.getEmail(), userData.getPwd());
             }
         });
 
@@ -120,7 +120,6 @@ public class LoginActivity extends AppCompatActivity {
             m_ProgresDialog.dismiss();
             if(integer == Common.login_success_code) {
                 Toast.makeText(LoginActivity.this, "Login success", Toast.LENGTH_LONG).show();
-                Intent i = new Intent(_context,ListDeviceActivity.class);
                 try {
                     // get list of lock data
                     //JSONArray jsonArrayDevice = jsonData.getJSONArray("message");
@@ -132,8 +131,14 @@ public class LoginActivity extends AppCompatActivity {
                     //SerializableListLockData serializableListLockData = new SerializableListLockData(lsLockData);
 
                     // get user id
-                    int userId = jsonData.getInt("uid");
-                    i.putExtra("user_id", userId);
+                    //int userId = jsonData.getInt("uid");
+                    //i.putExtra("user_id", userId);
+                    userData.setId(jsonData.getInt("uid"));
+                    userData.setName(jsonData.getString("user_name"));
+                    mySerializable desMySerial = new mySerializable();
+                    desMySerial.setUserData(userData);
+                    Intent i = new Intent(_context,ListDeviceActivity.class);
+                    i.putExtra("myserial", desMySerial);
                     startActivity(i);
                     finish();
                 } catch (Exception e) {

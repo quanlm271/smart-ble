@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,27 +13,30 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
 import se07.smart_ble.Serializable.SerializableListLockData;
+import se07.smart_ble.Serializable.mySerializable;
 
 public class ListDeviceActivity extends AppCompatActivity {
 
     public Context  _context = this;
     public String   _title = "List Device";
+    private Intent intent;
 
     private ListView listView_listDevice;
     private ArrayAdapter adapter_listDevice;
@@ -46,12 +48,19 @@ public class ListDeviceActivity extends AppCompatActivity {
     private AccessServiceAPI m_AccessServiceAPI;
     private JSONObject jsonData;
 
+    // Models
+    private LockData lockData;
+    private UserData userData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_device);
 
         setTitle(_title);
+
+        // get intent
+        intent = this.getIntent();
 
         //List View
         listView_listDevice = (ListView)findViewById(R.id.listView_listDevice);
@@ -62,11 +71,27 @@ public class ListDeviceActivity extends AppCompatActivity {
         // Json Object
         jsonData = new JSONObject();
 
+        // Initiate models
+        userData = new UserData();
+        lockData = new LockData();
+
+        // Load Models
+        Serializable serial = intent.getSerializableExtra("myserial");
+        if(serial != null) {
+            mySerializable originMySerial = (mySerializable) serial;
+            userData = originMySerial.getUserData();
+        }
+
         listView_listDevice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(_context, PinAccessActivity.class);
-                startActivity(intent);
+                lockData = listLockData.get(position);
+                mySerializable desMySerial = new mySerializable();
+                desMySerial.setUserData(userData);
+                desMySerial.setLockData(lockData);
+                Intent i = new Intent(_context, PinAccessActivity.class);
+                i.putExtra("myserial", desMySerial);
+                startActivity(i);
             }
         });
 
@@ -76,9 +101,9 @@ public class ListDeviceActivity extends AppCompatActivity {
         //String lock_03 = "LOCK 03 - MAC:B7-2A-E3-8B-8A-54";
 
         try {
-            int userId = getIntent().getIntExtra("user_id", -1);
+            //int userId = getIntent().getIntExtra("user_id", -1);
             //exec task register
-            new TaskLoadDevices().execute(String.valueOf(userId));
+            new TaskLoadDevices().execute(String.valueOf(userData.getId()));
         } catch (Exception e) {
             Log.v("Exception", e.toString());
         }
