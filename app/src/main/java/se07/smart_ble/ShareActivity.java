@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
@@ -54,6 +55,8 @@ public class ShareActivity extends AppCompatActivity {
     private ProgressDialog m_ProgresDialog;
     private AccessServiceAPI m_AccessServiceAPI;
     private JSONObject jsonData;
+    // list owners
+    private JSONArray jsonArrayOwner;
 
     // Dialog add new owner
     private AlertDialog dialogAddOwner;
@@ -83,6 +86,8 @@ public class ShareActivity extends AppCompatActivity {
         m_AccessServiceAPI = new AccessServiceAPI();
         // Json Object
         jsonData = new JSONObject();
+        // list owner
+        jsonArrayOwner = new JSONArray();
 
         // Initiate Models
         userData = new UserData();
@@ -114,7 +119,7 @@ public class ShareActivity extends AppCompatActivity {
         listView_currentUser.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                showDialog_editUserPermission();
+                showDialog_editUserPermission(position);
             }
         });
 
@@ -133,76 +138,77 @@ public class ShareActivity extends AppCompatActivity {
         });
     }
 
-    private void showDialog_editUserPermission(){
+    private void showDialog_editUserPermission(int index){
+        try {
+            // get selected owner
+            final JSONObject selectedOwner = jsonArrayOwner.getJSONObject(index);
+            // Initiate Edit Owner Dialog
+            AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+            builder.setTitle("Edit owner - " + lockData.get_mName());
+            // Set layout to dialog
+            final View viewInflated = LayoutInflater.from(_context).inflate(R.layout.dialog_edit_permission, null);
+            builder.setView(viewInflated);
+            // Textview email
+            final TextView textView_editOwnerEmail = (TextView) viewInflated.findViewById(R.id.textView_editOwnerEmail);
+            textView_editOwnerEmail.setText(selectedOwner.getString("email"));
+            //Spinner
+            final Spinner spinner_typeAccess = (Spinner) viewInflated.findViewById(R.id.spinner_editTypeAccess);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>( _context,
+                    android.R.layout.simple_spinner_dropdown_item, array_typeAccess);
+            spinner_typeAccess.setAdapter(adapter);
+            int spiner_selected_index = selectedOwner.getString("user_type").equals("root") ? 1 : 0;
+            spinner_typeAccess.setSelection(spiner_selected_index, true);
+            final AlertDialog dialog = builder.create();
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(_context);
-        builder.setTitle("Add new owner - LOCK 01");
+            //Remove Button
+            Button button_removeOwner = (Button) viewInflated.findViewById(R.id.button_removeOwner);
+            button_removeOwner.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(_TITLE,"Remove Confirm!!!");
+                    new AlertDialog.Builder(_context)
+                            .setTitle("Remove Owner")
+                            .setMessage("Are you sure you want to remove this owner?")
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Log.d(_TITLE,"Removed!!!");
+                                    new TaskRemoveOwner().execute(textView_editOwnerEmail.getText().toString(), lockData.get_mMAC());
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Log.d(_TITLE,"Remove Canceling!!!");
+                                }
+                            })
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
+                    dialog.dismiss();
 
-        final View viewInflated = LayoutInflater.from(_context).inflate(R.layout.dialog_edit_permission, null);
+                }
+            });
 
-        builder.setView(viewInflated);
+            Button button_editSave = (Button) viewInflated.findViewById(R.id.button_editSave);
+            button_editSave.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(_TITLE,"SAVED!!!");
+                    new TaskEditOwner().execute(textView_editOwnerEmail.getText().toString(), lockData.get_mMAC(),
+                            spinner_typeAccess.getSelectedItem().toString());
+                    dialog.dismiss();
+                }
+            });
 
-        //Spinner
-        final Spinner spinner_typeAccess = (Spinner) viewInflated.findViewById(R.id.spinner_editTypeAccess);
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<String>(
-                        _context,
-                        android.R.layout.simple_spinner_dropdown_item,
-                        array_typeAccess);
-        spinner_typeAccess.setAdapter(adapter);
-        spinner_typeAccess.setSelection(1, true);
-
-        final AlertDialog dialog = builder.create();
-
-        //Remove Button
-        Button button_removeOwner = (Button) viewInflated.findViewById(R.id.button_removeOwner);
-        button_removeOwner.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(_TITLE,"Remove Confirm!!!");
-                new AlertDialog.Builder(_context)
-                        .setTitle("Remove Owner")
-                        .setMessage("Are you sure you want to remove this owner?")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                Log.d(_TITLE,"Removed!!!");
-                                Toast.makeText(_context, "Removed Successfully!",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                Log.d(_TITLE,"Remove Canceling!!!");
-                            }
-                        })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-                dialog.dismiss();
-
-            }
-        });
-
-        Button button_editSave = (Button) viewInflated.findViewById(R.id.button_editSave);
-        button_editSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(_TITLE,"SAVED!!!");
-                Toast.makeText(_context, "Updated Successfully!",
-                        Toast.LENGTH_LONG).show();
-                dialog.dismiss();
-            }
-        });
-
-        Button button_editCancel = (Button) viewInflated.findViewById(R.id.button_editCancel);
-        button_editCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-
-
+            Button button_editCancel = (Button) viewInflated.findViewById(R.id.button_editCancel);
+            button_editCancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+            dialog.show();
+        } catch (Exception e) {
+            Log.v("Edit Owner", e.toString());
+        }
 
     }
 
@@ -274,7 +280,7 @@ public class ShareActivity extends AppCompatActivity {
                 try {
                     ArrayList<String> dummy_data = new ArrayList<String>();
                     // get list owners
-                    JSONArray jsonArrayOwner = jsonData.getJSONArray("data");
+                    jsonArrayOwner = jsonData.getJSONArray("data");
                     for (int index = 0; index < jsonArrayOwner.length(); index++) {
                         JSONObject jsonOwner = jsonArrayOwner.getJSONObject(index);
                         dummy_data.add(jsonOwner.getString("email"));
@@ -379,6 +385,82 @@ public class ShareActivity extends AppCompatActivity {
                     Toast.makeText(ShareActivity.this, "Share owner fail!", Toast.LENGTH_LONG).show();
                     dialogAddOwner.dismiss();
                 }
+            }
+        }
+    }
+
+    public class TaskRemoveOwner extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("email", params[0]);
+            postParam.put("mac", params[1]);
+            //postParam.put("type", params[2]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/RemoveOwner", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.result_success) {
+                try {
+                    Log.d(_TITLE,"SAVED!!!");
+                    Toast.makeText(_context, "Removed Owner Successfully!",
+                            Toast.LENGTH_LONG).show();
+                    // load lại list current owner
+                    new TaskGetCurrentOwners().execute(lockData.get_mMAC());
+                    dialogAddOwner.dismiss();
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else {
+                Toast.makeText(_context, "Removed Owner failed!",
+                        Toast.LENGTH_LONG).show();
+                dialogAddOwner.dismiss();
+            }
+        }
+    }
+
+    public class TaskEditOwner extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("email", params[0]);
+            postParam.put("mac", params[1]);
+            postParam.put("type", params[2]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/EditOwner", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.result_success) {
+                try {
+                    Log.d(_TITLE,"SAVED!!!");
+                    Toast.makeText(_context, "Updated Owner Successfully!",
+                            Toast.LENGTH_LONG).show();
+                    // load lại list current owner
+                    new TaskGetCurrentOwners().execute(lockData.get_mMAC());
+                    dialogAddOwner.dismiss();
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else {
+                Toast.makeText(_context, "Updated Owner failed!",
+                        Toast.LENGTH_LONG).show();
+                dialogAddOwner.dismiss();
             }
         }
     }

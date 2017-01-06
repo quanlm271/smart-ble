@@ -304,7 +304,7 @@ app.post ('/GetOwners', function(req, res) {
 		return;
 	}
 	
-	con.query("select u.user_id, u.user_name, u.email from owners as o INNER JOIN users as u on o.user_id = u.user_id LEFT JOIN `lock` as l on o.lock_id = l.lock_id where l.mac = ?", req.body.mac, function (err, result) {
+	con.query("select o.user_type, u.user_id, u.user_name, u.email from owners as o INNER JOIN users as u on o.user_id = u.user_id LEFT JOIN `lock` as l on o.lock_id = l.lock_id where l.mac = ?", req.body.mac, function (err, result) {
 		if(err) {
 			OnDbErr(err);
 			res.send(jsonRes);
@@ -379,3 +379,52 @@ app.post('/AddOwner', function (req, res) {
 	});
 });
 
+// API: Edit Owner
+app.post('/EditOwner', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("email") || !req.body.hasOwnProperty("mac") || !req.body.hasOwnProperty("type")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	con.query("SELECT user_id FROM `users` where email = ?", req.body.email, function (err, result) {
+		var user_id = result[0]["user_id"];
+		con.query("SELECT lock_id FROM `lock` WHERE mac = ?", req.body.mac, function (err, result) {
+			var lock_id = result[0]["lock_id"];
+			var set = [req.body.type, user_id, lock_id];
+			con.query("update owners set user_type = ? where user_id = ? and lock_id = ?", set, function (err, result) {
+				console.log(">> Edit Owner success");
+				jsonRes["result"] = jsonConfig["result_success"];
+				res.send(jsonRes);
+			});
+		});
+	});
+});
+
+// API: Remove Owner
+app.post('/RemoveOwner', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("email") || !req.body.hasOwnProperty("mac")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	con.query("SELECT user_id FROM `users` where email = ?", req.body.email, function (err, result) {
+		var user_id = result[0]["user_id"];
+		con.query("SELECT lock_id FROM `lock` WHERE mac = ?", req.body.mac, function (err, result) {
+			var lock_id = result[0]["lock_id"];
+			var set = [user_id, lock_id];
+			con.query("delete from owners WHERE user_id = ? and lock_id = ?", set, function (err, result) {
+				console.log(">> Remove Owner success");
+				jsonRes["result"] = jsonConfig["result_success"];
+				res.send(jsonRes);
+			});
+		});
+	});
+});
