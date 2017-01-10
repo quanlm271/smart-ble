@@ -4,7 +4,7 @@
     <!-- "Mark Favorite", should appear as action button if possible -->
     <item
         android:id="@+id/button_add_new_lock"
-        android:title="Add new"
+        android:title="Scan"
 
         app:showAsAction="ifRoom"/>
 

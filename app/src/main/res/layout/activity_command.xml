@@ -98,4 +98,18 @@
         android:paddingBottom="10dp"
         android:background="#eeeeee"
         android:layout_marginBottom="15dp" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Remove Lock"
+        android:id="@+id/btn_removeLock"
+        android:textSize="15dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:background="#db524c"
+        android:layout_below="@+id/button_information"
+        android:layout_centerHorizontal="true"
+        android:textColor="#ffffff" />
+
 </RelativeLayout>

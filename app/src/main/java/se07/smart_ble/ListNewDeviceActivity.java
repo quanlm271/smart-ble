@@ -33,6 +33,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import se07.smart_ble.Models.LockData;
 import se07.smart_ble.Serializable.mySerializable;
 
 public class ListNewDeviceActivity extends AppCompatActivity {
@@ -105,7 +106,8 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                 mLock = lock;
                 mService._connectToDevice(mLock);
 //                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
-                Intent intent = new Intent(_context, PinAccessActivity.class);
+
+                Intent intent = new Intent(_context, AddDeviceActivity.class);
                 intent.putExtra(bleDefine.LOCK_DATA,new mySerializable(mLock));
                 startActivity(intent);
             }
@@ -210,7 +212,8 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                 listView_newDevice.setAdapter(arrayAdapter);
             }
             if(action.equals(bleDefine.BLE_CONNECTED)){
-                mLock.sendCommand("00A0");
+                Log.d("AAd","DDD");
+//                mLock.sendCommand("33");
 //                AlertDialog.Builder builder = new AlertDialog.Builder(_context);
 //                builder.setTitle("Command");
 

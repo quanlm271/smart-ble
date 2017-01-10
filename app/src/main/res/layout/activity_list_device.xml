@@ -9,10 +9,24 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".ListDeviceActivity">
 
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="+ Add new"
+        android:id="@+id/btn_addNewLock"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:layout_margin="10dp"
+        android:background="#96CE59"
+        android:textColor="#ffffff"
+        android:textSize="15dp" />
+
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/listView_listDevice"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+        android:layout_below="@+id/btn_addNewLock"
+        android:layout_alignEnd="@+id/btn_addNewLock"
+        android:layout_alignStart="@+id/btn_addNewLock" />
+
 </RelativeLayout>

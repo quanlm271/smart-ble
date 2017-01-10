@@ -11,7 +11,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.io.Serializable;
 
@@ -31,12 +34,14 @@ public class CommandActivity extends AppCompatActivity {
 
     // Views
     private Button  button_unlock, button_share, button_history, button_changePass, button_infomation;
-
+    private TextView txt_typeUser;
 
     // Models
     private UserData userData;
     private LockData lockData;
+    public bleLockDevice mLockData;
 
+    private boolean islocked= false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,24 +53,45 @@ public class CommandActivity extends AppCompatActivity {
 
         // get intent
         intent = this.getIntent();
+        this.mLockData = new bleLockDevice();
 
+        txt_typeUser = (TextView)findViewById(R.id.textView_typeUser);
         // get Views
+        button_unlock = (Button) findViewById(R.id.button_unlock);
         button_share = (Button) findViewById(R.id.button_share);
         button_history = (Button) findViewById(R.id.button_history);
         button_changePass = (Button) findViewById(R.id.button_changePass);
         button_infomation = (Button) findViewById(R.id.button_information);
 
+        button_unlock.setText("Click to Lock");
         // Initiate Models
         userData = new UserData();
         lockData = new LockData();
 
-        // Load Models
-        Serializable serial = intent.getSerializableExtra("myserial");
-        if(serial != null) {
-            mySerializable originMySerial = (mySerializable) serial;
-            userData = originMySerial.getUserData();
-            lockData = originMySerial.getLockData();
+        Serializable serializable = intent.getSerializableExtra(bleDefine.LOCK_DATA);
+        if(serializable != null) {
+            mySerializable originMySerial = (mySerializable)serializable;
+            this.mLockData = originMySerial.getLOCK();
+            this.lockData = originMySerial.getLockData();
+            this.userData = originMySerial.getUserData();
         }
+
+        button_unlock.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(islocked) {
+                    islocked = false;
+                    mLockData.sendCommand("32");
+                    button_unlock.setText("Click to Lock");
+                }
+                else{
+                    mLockData.sendCommand("33");
+                    islocked = true;
+                    button_unlock.setText("Click to Unclock");
+                }
+
+            }
+        });
 
         button_share.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,7 +100,7 @@ public class CommandActivity extends AppCompatActivity {
                 mySerializable desMySerial = new mySerializable();
                 desMySerial.setUserData(userData);
                 desMySerial.setLockData(lockData);
-                i.putExtra("myserial", desMySerial);
+                i.putExtra(bleDefine.LOCK_DATA, desMySerial);
                 startActivity(i);
             }
         });

@@ -94,7 +94,7 @@ public class ShareActivity extends AppCompatActivity {
         lockData = new LockData();
 
         // Load models
-        Serializable serial = intent.getSerializableExtra("myserial");
+        Serializable serial = intent.getSerializableExtra(bleDefine.LOCK_DATA);
         if(serial != null) {
             mySerializable originMySerial = (mySerializable) serial;
             userData = originMySerial.getUserData();

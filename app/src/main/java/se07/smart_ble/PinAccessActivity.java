@@ -65,7 +65,7 @@ public class PinAccessActivity extends AppCompatActivity {
         this.userData = Common.GenerateUserData();
 
         // Load Models
-        Serializable serializable = intent.getSerializableExtra("myserial");
+        Serializable serializable = intent.getSerializableExtra(bleDefine.LOCK_DATA);
         if(serializable != null) {
             mySerializable originMySerial = (mySerializable)serializable;
             this.mLockData = originMySerial.getLOCK();
@@ -94,13 +94,21 @@ public class PinAccessActivity extends AppCompatActivity {
                 String keyVal = _keyboard[position];
                 switch (keyVal){
                     case "":
-                        Intent i = new Intent(_context, CommandActivity.class);
-                        mySerializable desMySerial = new mySerializable();
-                        desMySerial.setLockData(lockData);
-                        desMySerial.setUserData(userData);
-                        desMySerial.setBleLockDevice(mLockData);
-                        i.putExtra("myserial", desMySerial);
-                        startActivity(i);
+                        if(_lockPIN.equals("1234")){
+                            mLockData.sendCommand("32");
+                            Intent i = new Intent(_context, CommandActivity.class);
+                            mySerializable desMySerial = new mySerializable();
+                            desMySerial.setLockData(lockData);
+                            desMySerial.setUserData(userData);
+                            desMySerial.setBleLockDevice(mLockData);
+                            i.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                            startActivity(i);
+                        }
+                        else
+                        {
+                            countString=0;
+                            _lockPIN = "";
+                        }
                         break;
                     case "BACK":
                         finish();

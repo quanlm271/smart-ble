@@ -3,6 +3,7 @@ package se07.smart_ble;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -42,6 +43,7 @@ public class bleLockDevice {
     }
 
     public void sendCommand(String command) {
+        Log.d("AA", "AA");
         this.TxDataToLock.clear();
         blePacket p = new blePacket();
         p.data = bleDefine.hexToBytes(command);

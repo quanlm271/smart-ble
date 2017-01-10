@@ -3,7 +3,7 @@ package se07.smart_ble.Serializable;
 import java.io.Serializable;
 import java.util.List;
 
-import se07.smart_ble.LockData;
+import se07.smart_ble.Models.LockData;
 
 /**
  * Created by SangPham on 12/13/2016.

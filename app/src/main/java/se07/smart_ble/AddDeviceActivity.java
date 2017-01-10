@@ -47,7 +47,7 @@ public class AddDeviceActivity extends AppCompatActivity {
 
         setTitle(_title);
         Intent intent = this.getIntent();
-        mSerializable = (mySerializable) intent.getSerializableExtra("mData");
+        mSerializable = (mySerializable) intent.getSerializableExtra(bleDefine.LOCK_DATA);
         userId = intent.getIntExtra("uid", 5);
 
         textView_defaultName = (TextView) findViewById(R.id.textView_defaultName);
