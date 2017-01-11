@@ -232,7 +232,7 @@ public class ListDeviceActivity extends AppCompatActivity {
                     JSONArray jsonArrayDevice =  jsonData.getJSONArray("data");
                     for (int index = 0; index < jsonArrayDevice.length(); index++) {
                         JSONObject jsonDevice = jsonArrayDevice.getJSONObject(index);
-                        LockData lockData = new LockData(jsonDevice.getString("name"), jsonDevice.getString("mac"));
+                        LockData lockData = new LockData(jsonDevice.getInt("lock_id"), jsonDevice.getString("name"), jsonDevice.getString("mac"));
                         listLockData.add(lockData);
                     }
 //                    // create list labels for listview

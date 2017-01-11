@@ -275,8 +275,8 @@ app.post ('/AddDevice', function(req, res) {
 	}
 	
 	var status = req.body.hasOwnProperty("status") ? req.body.status : "inactive";
-	var set = [req.body.mac.toUpperCase(), req.body.name, req.body.pin, status];
-	con.query("insert into `lock` set mac = ?, name = ?, pin = ?, status = ?", set, function (err, result) {
+	var set = [req.body.mac.toUpperCase()];
+	con.query("select * from `lock` where mac = ?", set, function (err, result) {
 		if(err) {
 			OnDbErr(err);
 			res.send(jsonRes);
@@ -284,7 +284,7 @@ app.post ('/AddDevice', function(req, res) {
 		}
 		console.log('>> Add Device, last inserted ID: ', result.insertId);
 		var type = req.body.hasOwnProperty("type") ? req.body.type : "root";
-		set = [req.body.uid, result.insertId, type];
+		set = [req.body.uid, result[0]["lock_id"], type];
 		con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?", set, function (err, result) {
 			console.log(">> Add Device, Add Owner success");
 			jsonRes["result"] = jsonConfig["result_success"];
@@ -426,5 +426,29 @@ app.post('/RemoveOwner', function (req, res) {
 				res.send(jsonRes);
 			});
 		});
+	});
+});
+
+// API: Remove Owner
+app.post('/RemoveAllLockOwner', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("lock_id")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	con.query("DELETE from owners where lock_id = ?", req.body.lock_id, function (err, result) {
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+
+		console.log(">> Remove all owners success");
+				jsonRes["result"] = jsonConfig["result_success"];
+				res.send(jsonRes);
 	});
 });

@@ -108,6 +108,7 @@ public class ListNewDeviceActivity extends AppCompatActivity {
 //                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
 
                 Intent intent = new Intent(_context, AddDeviceActivity.class);
+
                 intent.putExtra(bleDefine.LOCK_DATA,new mySerializable(mLock));
                 startActivity(intent);
             }

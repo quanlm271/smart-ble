@@ -48,7 +48,7 @@ public class AddDeviceActivity extends AppCompatActivity {
         setTitle(_title);
         Intent intent = this.getIntent();
         mSerializable = (mySerializable) intent.getSerializableExtra(bleDefine.LOCK_DATA);
-        userId = intent.getIntExtra("uid", 5);
+        userId = intent.getIntExtra("uid", 12);
 
         textView_defaultName = (TextView) findViewById(R.id.textView_defaultName);
         textView_MAC = (TextView) findViewById(R.id.textView_MAC);
@@ -98,10 +98,10 @@ public class AddDeviceActivity extends AppCompatActivity {
                 //Successfull
                 //Back to List_Device_Activity
                 //exec task register
-                //new TaskAddDevice().execute(textView_MAC.getText().toString(), editText_lockName.getText().toString(),
-                //        editText_pin.getText().toString());
-                new TaskAddDevice().execute("87:C2:54:12:34:5A", editText_lockName.getText().toString(),
-                        Common.PinToHex(editText_pin.getText().toString()), Integer.toString(userId));
+                new TaskAddDevice().execute(textView_MAC.getText().toString(), editText_lockName.getText().toString(),
+                        editText_pin.getText().toString(),Integer.toString(userId) );
+                //new TaskAddDevice().execute("87:C2:54:12:34:5A", editText_lockName.getText().toString(),
+                //        Common.PinToHex(editText_pin.getText().toString()), Integer.toString(userId));
             }
         });
 
