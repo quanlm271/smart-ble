@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -59,7 +60,7 @@ public class ListDeviceActivity extends AppCompatActivity {
     private ArrayList<String> listOwnerDevice = new ArrayList<String>();
 
     // List LockData
-    private List<LockData> listLockData;
+    private ArrayList<LockData> listLockData;
     private Button btnAddNew;
     private ProgressDialog m_ProgresDialog;
     private AccessServiceAPI m_AccessServiceAPI;
@@ -108,6 +109,8 @@ public class ListDeviceActivity extends AppCompatActivity {
 ////                    mService.disconnect(mLock);
 //                }
                 Intent intent = new Intent(_context, ListNewDeviceActivity.class);
+                mySerializable desMySerial = new mySerializable();
+                desMySerial.setUserData(userData);
                 startActivity(intent);
             }
         });
@@ -140,27 +143,39 @@ public class ListDeviceActivity extends AppCompatActivity {
 ////                i.putExtra("myserial", desMySerial);
 ////                startActivity(i);
 
+//                Object obj = listView_listDevice.getItemAtPosition(position);
+//                Log.w(_TAG,"Connect " + obj.toString());
+//                bleLockDevice lock= (bleLockDevice) obj;
+//                if(lock != null) {
+//                    if (lock.ble_mac != lock.ble_mac)
+//                        mService.disconnect(lock);
+//                }
+//                mLock = lock;
+//                mService._connectToDevice(mLock);
+////                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
+//
+//                for(LockData ld : listLockData){
+//                    if(lock.ble_mac.equals(ld.get_mMAC().toUpperCase()))
+//                        lockData = ld;
+//                }
+
                 Object obj = listView_listDevice.getItemAtPosition(position);
                 Log.w(_TAG,"Connect " + obj.toString());
-                bleLockDevice lock= (bleLockDevice) obj;
-                if(lock != null) {
-                    if (lock.ble_mac != lock.ble_mac)
-                        mService.disconnect(lock);
+                LockData selectedLockData = (LockData) obj;
+                if(selectedLockData.IsInBound) {
+                    // Get approriated bleDevice
+                    mLock = mService.listDevice.get(selectedLockData.get_mMAC());
+                    mService._connectToDevice(mLock);
+                    mySerializable desMySerial = new mySerializable(mLock);
+                    desMySerial.setUserData(userData);
+                    desMySerial.setLockData(lockData);
+                    Intent intent = new Intent(_context, PinAccessActivity.class);
+                    intent.putExtra(bleDefine.LOCK_DATA,desMySerial);
+                    startActivity(intent);
+                } else {
+                    // show toast here
+                    Toast.makeText(ListDeviceActivity.this, "Device is not in bound!", Toast.LENGTH_LONG).show();
                 }
-                mLock = lock;
-                mService._connectToDevice(mLock);
-//                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
-
-                for(LockData ld : listLockData){
-                    if(lock.ble_mac.equals(ld.get_mMAC().toUpperCase()))
-                        lockData = ld;
-                }
-                mySerializable desMySerial = new mySerializable(mLock);
-                desMySerial.setUserData(userData);
-                desMySerial.setLockData(lockData);
-                Intent intent = new Intent(_context, PinAccessActivity.class);
-                intent.putExtra(bleDefine.LOCK_DATA,desMySerial);
-                startActivity(intent);
             }
         });
 
@@ -169,6 +184,7 @@ public class ListDeviceActivity extends AppCompatActivity {
         //String lock_02 = "LOCK 02 - MAC:80-E2-4C-5E-61-58";
         //String lock_03 = "LOCK 03 - MAC:B7-2A-E3-8B-8A-54";
 
+        // Load list devices
         try {
             //int userId = getIntent().getIntExtra("user_id", -1);
             //exec task register
@@ -176,6 +192,9 @@ public class ListDeviceActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.v("Exception", e.toString());
         }
+
+        // Start Scanning BLE device to highligh device in bound
+        //mService.StartBLE();
     }
 
     @Override
@@ -228,6 +247,8 @@ public class ListDeviceActivity extends AppCompatActivity {
             if(integer == Common.result_success) {
                 Toast.makeText(ListDeviceActivity.this, "Loading success", Toast.LENGTH_LONG).show();
                 try {
+                    // Display all lockdata from server
+
                     // get list devices
                     JSONArray jsonArrayDevice =  jsonData.getJSONArray("data");
                     for (int index = 0; index < jsonArrayDevice.length(); index++) {
@@ -235,16 +256,16 @@ public class ListDeviceActivity extends AppCompatActivity {
                         LockData lockData = new LockData(jsonDevice.getInt("lock_id"), jsonDevice.getString("name"), jsonDevice.getString("mac"));
                         listLockData.add(lockData);
                     }
-//                    // create list labels for listview
-////                    ArrayList<String> listLabel = new ArrayList<String>();
+                    // create list labels for listview
+//                    ArrayList<String> listLabel = new ArrayList<String>();
 //                    for (LockData lockData : listLockData) {
 //                        String label = lockData.get_mName() + " - " + lockData.get_mMAC();
 //                        listOwnerDevice.add(label);
 //                    }
-                    // Adapter
-//                    adapter_listDevice = new ArrayAdapter<String>(_context, android.R.layout.simple_list_item_1, listLabel);
-//                    //Set data to listView
-//                    listView_listDevice.setAdapter(adapter_listDevice);
+                    //Adapter
+                    adapter_listDevice = new ArrayAdapter<LockData>(_context, android.R.layout.simple_list_item_1, listLockData);
+                    //Set data to listView
+                    listView_listDevice.setAdapter(adapter_listDevice);
                 } catch (Exception e) {
                     Log.v("Exception", e.toString());
                 }
@@ -284,17 +305,27 @@ public class ListDeviceActivity extends AppCompatActivity {
             String action = intent.getAction();
             if (action.equals(bleDefine.LOCK_FOUND)) {
                 Log.d(_TAG, "FOUND" + mService.listDevice.size());
-                ArrayList<bleLockDevice> _list = new ArrayList<bleLockDevice>();
+                //ArrayList<bleLockDevice> _list = new ArrayList<bleLockDevice>();
                 for (bleLockDevice d : mService.listDevice.values()) {
                     Log.w(_TAG, "MAC: " + d.ble_mac + " Name: " + d.ble_name);
                     for(LockData ld: listLockData)
                     {
-                        if(d.ble_mac.equals(ld.get_mMAC().toUpperCase()))
-                            _list.add(d);
+                        if(d.ble_mac.equals(ld.get_mMAC().toUpperCase())) {
+                            //_list.add(d);
+                            ld.IsInBound = true;
+                        } else {
+                            ld.IsInBound = false;
+                        }
+                    }
+                    //_list.add(d);
+                }
+                //adapter_listDevice = new ArrayAdapter(_context, android.R.layout.simple_list_item_1, _list);
+                //listView_listDevice.setAdapter(adapter_listDevice);
+                for (int i = 0; i < listLockData.size(); i++) {
+                    if(listLockData.get(i).IsInBound) {
+                        listView_listDevice.getChildAt(i).setBackgroundColor(Color.parseColor("#3b5998"));
                     }
                 }
-                adapter_listDevice = new ArrayAdapter(_context, android.R.layout.simple_list_item_1, _list);
-                listView_listDevice.setAdapter(adapter_listDevice);
             }
             if (action.equals(bleDefine.BLE_CONNECTED)) {
                 Log.d("AAd", "DDD");

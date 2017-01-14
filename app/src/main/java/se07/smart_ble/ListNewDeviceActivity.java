@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -30,10 +31,19 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import se07.smart_ble.API.AccessServiceAPI;
+import se07.smart_ble.API.Common;
 import se07.smart_ble.Models.LockData;
+import se07.smart_ble.Models.UserData;
 import se07.smart_ble.Serializable.mySerializable;
 
 public class ListNewDeviceActivity extends AppCompatActivity {
@@ -58,11 +68,19 @@ public class ListNewDeviceActivity extends AppCompatActivity {
 
     private bleLockService mService;
     private ArrayAdapter arrayAdapter;
+
+    // Models
+    private UserData userData;
     public bleLockDevice mLock;
 
     private mySerializable mSerialeizable;
 
+    // View
     private ListView listView_newDevice;
+
+    // Asyntask
+    private AccessServiceAPI m_AccessServiceAPI;
+    private JSONObject jsonData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +108,22 @@ public class ListNewDeviceActivity extends AppCompatActivity {
             }
 
         }
+
+        // AccessService
+        m_AccessServiceAPI = new AccessServiceAPI();
+        jsonData = new JSONObject();
+
+        // Initiate Models
+        userData = new UserData();
+        mLock = new bleLockDevice();
         mSerialeizable = new mySerializable(null);
+
+        // Load Models
+        Serializable serial = getIntent().getSerializableExtra("myserial");
+        if(serial != null) {
+            mySerializable originMySerial = (mySerializable) serial;
+            userData = originMySerial.getUserData();
+        }
 
         listView_newDevice = (ListView) findViewById(R.id.listView_newDevice);
         listView_newDevice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -104,13 +137,7 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                         mService.disconnect(lock);
                 }
                 mLock = lock;
-                mService._connectToDevice(mLock);
-//                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
-
-                Intent intent = new Intent(_context, AddDeviceActivity.class);
-
-                intent.putExtra(bleDefine.LOCK_DATA,new mySerializable(mLock));
-                startActivity(intent);
+                new TaskCheckNewDevice().execute(mLock.ble_mac);
             }
         });
         service_init();
@@ -310,5 +337,45 @@ public class ListNewDeviceActivity extends AppCompatActivity {
         intentFilter.addAction(bleDefine.RECEIVED_SERVER_DATA);
         intentFilter.addAction(bleDefine.RECEIVED_APP_DATA);
         return intentFilter;
+    }
+
+    public class TaskCheckNewDevice extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("mac", params[0]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/CheckNewDevice", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.lock_has_no_owner_code) {
+                try {
+                    mService._connectToDevice(mLock);
+//                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
+
+                    Intent intent = new Intent(_context, AddDeviceActivity.class);
+                    //intent.putExtra(bleDefine.LOCK_DATA,new mySerializable(mLock));
+                    mySerializable desMySerial = new mySerializable(mLock);
+                    desMySerial.setUserData(userData);
+                    intent.putExtra("myserial", desMySerial);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Log.v("Check new device", e.toString());
+                }
+            } else if(integer == Common.lock_has_owner_code) {
+                Toast.makeText(ListNewDeviceActivity.this, "Device has owners already!", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(ListNewDeviceActivity.this, "Failed connecting to server!", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

@@ -8,5 +8,7 @@
 	"user_not_owns_lock" : 7,
 	"user_owns_lock" : 8,
 	"lock_not_exist" : 9,
-	"result_success" : 10
+	"result_success" : 10,
+	"lock_has_owner_code" : 11,
+    "lock_has_no_owner_code" : 12
 }

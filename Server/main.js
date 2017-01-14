@@ -268,7 +268,7 @@ app.post ('/AddDevice', function(req, res) {
 	res.contentType('application/json');
 	
 	// check if incorrect requested json format
-	if(!req.body.hasOwnProperty("name")|| !req.body.hasOwnProperty("pin") || !req.body.hasOwnProperty("uid")) {
+	if(!req.body.hasOwnProperty("mac") || !req.body.hasOwnProperty("name")|| !req.body.hasOwnProperty("pin") || !req.body.hasOwnProperty("uid")) {
 		OnDataIncorrect();
 		res.send(jsonRes);
 		return;
@@ -276,13 +276,32 @@ app.post ('/AddDevice', function(req, res) {
 	
 	var status = req.body.hasOwnProperty("status") ? req.body.status : "inactive";
 	var set = [req.body.mac.toUpperCase()];
+	
+	// 1. check if lock is in database
+	con.query("SELECT * FROM `lock` where mac = ?", req.body.mac.toUpperCase(), function (err, result){
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		
+		if(Object.keys(result).length > 0) {
+			
+		} else {
+			
+		}
+	});
+	// 2. if not, insert lock
+	// 3. if yes, update name and pin
+	// 
+	
 	con.query("select * from `lock` where mac = ?", set, function (err, result) {
 		if(err) {
 			OnDbErr(err);
 			res.send(jsonRes);
 			return;
 		}
-		console.log('>> Add Device, last inserted ID: ', result.insertId);
+		//console.log('>> Add Device, last inserted ID: ', result.insertId);
 		var type = req.body.hasOwnProperty("type") ? req.body.type : "root";
 		set = [req.body.uid, result[0]["lock_id"], type];
 		con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?", set, function (err, result) {
@@ -450,5 +469,51 @@ app.post('/RemoveAllLockOwner', function (req, res) {
 		console.log(">> Remove all owners success");
 				jsonRes["result"] = jsonConfig["result_success"];
 				res.send(jsonRes);
+	});
+});
+
+// API: Check new device
+app.post('/CheckNewDevice', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("mac")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	con.query("SELECT * FROM `lock` where mac = ?", req.body.mac, function (err, result){
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		
+		if(Object.keys(result).length > 0) {
+			var lock_id = result[0]["lock_id"];
+			var name = result[0]["name"];
+			con.query("SELECT * FROM `owners` where lock_id = ?", lock_id, function (err, result){
+				if(err) {
+					OnDbErr(err);
+					res.send(jsonRes);
+					return;
+				}
+				
+				if(Object.keys(result).length > 0) {
+					console.log(">> Check new device: " + name + " has " + Object.keys(result).length + " owners");
+					jsonRes["result"] = jsonConfig["lock_has_owner_code"];
+					res.send(jsonRes);
+				} else {
+					console.log(">> Check new device: " + name + " has no owners");
+					jsonRes["result"] = jsonConfig["lock_has_no_owner_code"];
+					res.send(jsonRes);
+				}
+			});
+		} else {
+			console.log(">> Check new device: " + req.body.mac + " has no owners");
+			jsonRes["result"] = jsonConfig["lock_has_no_owner_code"];
+			res.send(jsonRes);
+		}
 	});
 });

@@ -10,10 +10,10 @@ import se07.smart_ble.Models.UserData;
  */
 
 public class Common {
-    //static final String SERVICE_API_URL = "http://192.168.137.1:8081/register";
+    public static final String SERVICE_API_URL = "http://192.168.137.1:8081";
     //public static final String SERVICE_API_URL = "http://10.0.2.2:8081";
 //    public static final String SERVICE_API_URL = "http://10.45.7.213:8081";
-        public static final String SERVICE_API_URL = "http://10.45.130.235:8081";
+    // public static final String SERVICE_API_URL = "http://10.45.130.235:8081";
     public static final int exception_code = 0;
     public static final int database_query_failed_code = 1;
     public static final int incorrect_requested_format_json_code = 2;
@@ -25,6 +25,8 @@ public class Common {
     public static final int user_owns_lock = 8;
     public static final int lock_not_exist = 9;
     public static final int result_success = 10;
+    public static final int lock_has_owner_code = 11;
+    public static final int lock_has_no_owner_code = 12;
 
     public static boolean isEmpty(EditText etText) {
         if (etText.getText().toString().trim().length() > 0)

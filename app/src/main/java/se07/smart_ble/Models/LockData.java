@@ -10,6 +10,8 @@ public class LockData {
     private String mMAC;
     private String mPin;
 
+    public boolean IsInBound = false;
+
     public LockData(int _lockId, String _name, String _mac){
         this.mLockId = _lockId;
         this.mName = _name;
@@ -45,5 +47,10 @@ public class LockData {
 
     public void setMac(String _mac) {
         this.mMAC = _mac;
+    }
+
+    @Override
+    public String toString() {
+        return this.mName + " ("+ this.mMAC+")";
     }
 }
