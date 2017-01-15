@@ -35,6 +35,7 @@ public class bleLockDevice {
     public bleLockDevice() {
         ble_name = "";
         ble_mac = "";
+        ble_sk = "";
     }
 
     @Override

@@ -15,11 +15,13 @@ import android.widget.Toast;
 
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Models.UserData;
 import se07.smart_ble.Serializable.mySerializable;
 
 public class AddDeviceActivity extends AppCompatActivity {
@@ -27,18 +29,20 @@ public class AddDeviceActivity extends AppCompatActivity {
     public Context _context = this;
     public String  _title = "Add New";
 
-    private mySerializable mSerializable;
+    // View
     private TextView    textView_defaultName,
             textView_MAC, textView_alertMessage;
-    private bleLockDevice mLock;
     private EditText editText_lockName, editText_pin, editText_pinAgain;
-
     private Button button_save, button_cancel;
 
+    // AsynTask
     private ProgressDialog m_ProgresDialog;
     private AccessServiceAPI m_AccessServiceAPI;
     private JSONObject jsonData;
-    private int userId;
+
+    // Models
+    private UserData userData;
+    private bleLockDevice mLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +51,6 @@ public class AddDeviceActivity extends AppCompatActivity {
 
         setTitle(_title);
         Intent intent = this.getIntent();
-        mSerializable = (mySerializable) intent.getSerializableExtra(bleDefine.LOCK_DATA);
-        userId = intent.getIntExtra("uid", 12);
 
         textView_defaultName = (TextView) findViewById(R.id.textView_defaultName);
         textView_MAC = (TextView) findViewById(R.id.textView_MAC);
@@ -59,14 +61,21 @@ public class AddDeviceActivity extends AppCompatActivity {
         // Json Object
         jsonData = new JSONObject();
 
-        if(mSerializable != null){
-            bleLockDevice mLockData = mSerializable.getLOCK();
-            textView_defaultName.setText(mLockData.ble_name);
-            textView_MAC.setText(mLockData.ble_mac);
-        } else {
-            //Dummy Data
-            mLock = new bleLockDevice("lock_01","88:C2:55:12:34:5A");
+        // Initiate Models
+        mLock = new bleLockDevice();
+        userData = new UserData();
+
+        // Load Models
+        Serializable serial = getIntent().getSerializableExtra("myserial");
+        if(serial != null) {
+            mySerializable originSerial = (mySerializable) serial;
+            mLock = originSerial.getLOCK();
+            userData = originSerial.getUserData();
         }
+
+        // Set Text View
+        textView_defaultName.setText(mLock.ble_name);
+        textView_MAC.setText(mLock.ble_mac);
 
         button_save = (Button) findViewById(R.id.button_saveAddDevice);
         button_cancel = (Button)findViewById(R.id.button_cancelAddDevice);
@@ -98,10 +107,8 @@ public class AddDeviceActivity extends AppCompatActivity {
                 //Successfull
                 //Back to List_Device_Activity
                 //exec task register
-                new TaskAddDevice().execute(textView_MAC.getText().toString(), editText_lockName.getText().toString(),
-                        editText_pin.getText().toString(),Integer.toString(userId) );
-                //new TaskAddDevice().execute("87:C2:54:12:34:5A", editText_lockName.getText().toString(),
-                //        Common.PinToHex(editText_pin.getText().toString()), Integer.toString(userId));
+                new TaskAddDevice().execute(mLock.ble_mac, editText_lockName.getText().toString(),
+                        Common.PinToHex(editText_pin.getText().toString()), Integer.toString(userData.getId()));
             }
         });
 
@@ -147,18 +154,9 @@ public class AddDeviceActivity extends AppCompatActivity {
                 Toast.makeText(AddDeviceActivity.this, "Saved device success", Toast.LENGTH_LONG).show();
                 Intent i = new Intent(_context,ListDeviceActivity.class);
                 try {
-                    // get list of lock data
-                    //JSONArray jsonArrayDevice = jsonData.getJSONArray("message");
-                    //for (int index = 0; index < jsonArrayDevice.length(); index++) {
-                    //    JSONObject jsonDevice = jsonArrayDevice.getJSONObject(index);
-                    //    LockData lockData = new LockData(jsonDevice.getString("name"), jsonDevice.getString("mac"));
-                    //    lsLockData.add(lockData);
-                    //}
-                    //SerializableListLockData serializableListLockData = new SerializableListLockData(lsLockData);
-
-                    // get user id
-                    //int userId = jsonData.getInt("uid");
-                    i.putExtra("user_id", userId);
+                    mySerializable desMySerial = new mySerializable();
+                    desMySerial.setUserData(userData);
+                    i.putExtra("myserial", desMySerial);
                     startActivity(i);
                     finish();
                 } catch (Exception e) {

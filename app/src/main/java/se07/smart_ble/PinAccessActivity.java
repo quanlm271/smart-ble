@@ -1,20 +1,31 @@
 package se07.smart_ble;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 
+import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
 import se07.smart_ble.Models.LockData;
 import se07.smart_ble.Models.UserData;
@@ -39,8 +50,16 @@ public class PinAccessActivity extends AppCompatActivity {
     private LockData lockData;
     private UserData userData;
 
+    // AsynTask
+    private ProgressDialog m_ProgresDialog;
+    private AccessServiceAPI m_AccessServiceAPI;
+    private JSONObject jsonData;
+
     //demo code
     private int demoUID = 15;
+
+    // PHash
+    private byte[] bytePHash;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +72,10 @@ public class PinAccessActivity extends AppCompatActivity {
         // get intent
         intent = this.getIntent();
 
-        // Load Models Object
-        // mySerializable mSerializable = (mySerializable) intent.getSerializableExtra("serial");
-        //if(intent == null) {
-        //    Log.v("PinAccess, intent", intent.toString());
-        //}
+        // AccessService
+        m_AccessServiceAPI = new AccessServiceAPI();
+        // Json Object
+        jsonData = new JSONObject();
 
         // Initiate models
         this.mLockData = new bleLockDevice();
@@ -94,21 +112,30 @@ public class PinAccessActivity extends AppCompatActivity {
                 String keyVal = _keyboard[position];
                 switch (keyVal){
                     case "":
-                        if(_lockPIN.equals("1234")){
-                            mLockData.sendCommand("32");
-                            Intent i = new Intent(_context, CommandActivity.class);
-                            mySerializable desMySerial = new mySerializable();
-                            desMySerial.setLockData(lockData);
-                            desMySerial.setUserData(userData);
-                            desMySerial.setBleLockDevice(mLockData);
-                            i.putExtra(bleDefine.LOCK_DATA, desMySerial);
-                            startActivity(i);
-                        }
-                        else
-                        {
+//                        if(_lockPIN.equals("1234")){
+//                            //mLockData.sendCommand("32");
+//                            Intent i = new Intent(_context, CommandActivity.class);
+//                            mySerializable desMySerial = new mySerializable();
+//                            desMySerial.setLockData(lockData);
+//                            desMySerial.setUserData(userData);
+//                            desMySerial.setBleLockDevice(mLockData);
+//                            i.putExtra(bleDefine.LOCK_DATA, desMySerial);
+//                            startActivity(i);
+//                        }
+//                        else
+//                        {
+//                            countString=0;
+//                            _lockPIN = "";
+//                        }
+
+                        if(countString < _maxsize) {
                             countString=0;
                             _lockPIN = "";
+                            ResetArrayEditText();
+                        } else {
+                            new TaskCheckPin().execute(bleDefine.bytesToHex(bytePHash));
                         }
+
                         break;
                     case "BACK":
                         finish();
@@ -119,14 +146,20 @@ public class PinAccessActivity extends AppCompatActivity {
                             arrayEditText.get(countString).setText("*");
                             countString++;
                             Log.d(_title,"PIN :" + _lockPIN);
-                        }else{
-                           byte[] bytePHash = getPHASH();
+                            if(countString == _maxsize) {
+                                bytePHash = getPHASH();
+                            }
                         }
                         break;
-
                 }
             }
         });
+    }
+
+    private void ResetArrayEditText () {
+        for (TextView edt : arrayEditText) {
+            edt.setText("");
+        }
     }
 
     private byte[] getPHASH(){
@@ -158,8 +191,7 @@ public class PinAccessActivity extends AppCompatActivity {
     //Same in server
     private byte[] getPinHash(){
         byte[] bytePinHash = new byte[16];
-        byte[] bytePIN = _lockPIN.getBytes();
-
+        byte[] bytePIN = bleDefine.hexToBytes(Common.PinToHex(_lockPIN));
         for(int i=0; i<4; i++ ){
             bytePinHash[i*4]=bytePIN[i];
         }
@@ -187,7 +219,7 @@ public class PinAccessActivity extends AppCompatActivity {
             byteResult[index++]= byteCommand[i];
 
         //PIN 4
-        byte[] bytePIN = _lockPIN.getBytes();
+        byte[] bytePIN = bleDefine.hexToBytes(Common.PinToHex(_lockPIN));
         for(int i=0; i<4; i++ ){
             byteResult[index++]=bytePIN[i];
         }
@@ -198,7 +230,8 @@ public class PinAccessActivity extends AppCompatActivity {
             byteResult[index++]= byteRandom[i];
 
         //SK 6
-        byte[] byteSK = bleDefine.hexToBytes(mLockData.ble_sk);
+        //byte[] byteSK = bleDefine.hexToBytes(mLockData.ble_sk);
+        byte[] byteSK = lockData.getSessionKey();
         for(int i=0; i < byteSK.length; i++){
             byteResult[index++] = byteSK[i];
         }
@@ -210,19 +243,21 @@ public class PinAccessActivity extends AppCompatActivity {
 
         byte[] byteUserData = new byte[8];
         int index=0;
-        if(mLockData == null){
-            return null;
-        }
+//        if(mLockData == null){
+//            return null;
+//        }
 
         //MAC 6
-        byte[] byteMac = bleDefine.MacToBytes(mLockData.ble_mac);
+        //byte[] byteMac = bleDefine.MacToBytes(mLockData.ble_mac);
+        byte[] byteMac = bleDefine.MacToBytes(lockData.get_mMAC());
         for(int i=0; i< byteMac.length; i++)
         {
             byteUserData[index++] = byteMac[i];
         }
 
         //UID 2
-        byte[] byteUID = bleDefine.hexToBytes("0010");
+        String hexUID4Digits = String.format("%04X", userData.getId()); // 2 bytes = 4 hex digits
+        byte[] byteUID = bleDefine.hexToBytes(hexUID4Digits);
         for(int i=0; i < byteUID.length; i++){
             byteUserData[index++] = byteUID[i];
         }
@@ -239,6 +274,60 @@ public class PinAccessActivity extends AppCompatActivity {
             byteResult[i]= (byte)n;
         }
         return byteResult;
+    }
+
+    public class TaskCheckPin extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            m_ProgresDialog = ProgressDialog.show(PinAccessActivity.this, "Please wait", "Server is change PIN...", true);
+        }
+
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("phash", params[0]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/converthex", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            m_ProgresDialog.dismiss();
+            if(integer == Common.result_success) {
+                try {
+                    if(lockData.IsInBound) {
+                        mLockData.sendCommand("32");
+                    }
+                    Intent i = new Intent(_context, CommandActivity.class);
+                    mySerializable desMySerial = new mySerializable();
+                    desMySerial.setLockData(lockData);
+                    desMySerial.setUserData(userData);
+                    desMySerial.setBleLockDevice(mLockData);
+                    i.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                    startActivity(i);
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else if (integer == Common.pin_not_correct_code) {
+                Toast.makeText(PinAccessActivity.this, "PIN is not correct!", Toast.LENGTH_LONG).show();
+                countString=0;
+                _lockPIN = "";
+                ResetArrayEditText();
+            } else {
+                Toast.makeText(PinAccessActivity.this, "Failed to connect to server!", Toast.LENGTH_LONG).show();
+                countString=0;
+                _lockPIN = "";
+                ResetArrayEditText();
+            }
+        }
     }
 }
 

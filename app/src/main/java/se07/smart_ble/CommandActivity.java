@@ -74,7 +74,6 @@ public class CommandActivity extends AppCompatActivity {
         button_infomation = (Button) findViewById(R.id.button_information);
         button_remove = (Button) findViewById(R.id.btn_removeLock);
 
-        button_unlock.setText("Click to Lock");
         // Initiate Models
         userData = new UserData();
         lockData = new LockData();
@@ -92,6 +91,7 @@ public class CommandActivity extends AppCompatActivity {
             this.userData = originMySerial.getUserData();
         }
 
+        button_unlock.setText("Click to Lock");
         button_unlock.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -105,7 +105,6 @@ public class CommandActivity extends AppCompatActivity {
                     islocked = true;
                     button_unlock.setText("Click to Unclock");
                 }
-
             }
         });
 
@@ -165,28 +164,38 @@ public class CommandActivity extends AppCompatActivity {
 
             }
         });
+
+        if(lockData.IsInBound) {
+            button_unlock.setVisibility(View.VISIBLE);
+        } else {
+            button_unlock.setVisibility(View.GONE);
+        }
+        new TaskCheckTypeUser().execute(Integer.toString(userData.getId()), Integer.toString(lockData.getLockId()));
     }
     private void showDialog_loginChangePin(){
         AlertDialog.Builder builder = new AlertDialog.Builder(_context);
         builder.setTitle("Change Lock PIN");
 
         View viewInflated = LayoutInflater.from(_context).inflate(R.layout.dialog_change_pincode_01, null);
-
         builder.setView(viewInflated);
         final AlertDialog dialog = builder.create();
 
-        //Remove Button
+        // GetView
+        // EditText Email
+        EditText editText_rootEmail = (EditText) viewInflated.findViewById(R.id.editText_rootEmail);
+        // EditText Password
+        final EditText editTextPassword = (EditText) viewInflated.findViewById(R.id.editText_rootPassword);
+        // Button Next
         Button button_changePinNext = (Button) viewInflated.findViewById(R.id.button_changePinNext);
 
+        // Load View
+        editText_rootEmail.setText(userData.getEmail());
 
-        // change pin
+        // Trigger Event Click
         button_changePinNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(_TITLE,"SAVED!!!");
-                Toast.makeText(_context, "Saved Successfully!",
-                        Toast.LENGTH_LONG).show();
-                showDialog_changePin();
+                new TaskCheckLogin().execute(userData.getEmail(), editTextPassword.getText().toString());
                 dialog.dismiss();
             }
         });
@@ -208,27 +217,43 @@ public class CommandActivity extends AppCompatActivity {
 
         View viewInflated = LayoutInflater.from(_context).inflate(R.layout.dialog_change_pincode_02, null);
 
+        // Get View
+        // EditText New Pin
         final EditText editText_newPin = (EditText) viewInflated.findViewById(R.id.editText_newPIN);
-        EditText editText_newPinAgain = (EditText) viewInflated.findViewById(R.id.editText_againPIN);
+        // EditText Pin Again
+        final EditText editText_newPinAgain = (EditText) viewInflated.findViewById(R.id.editText_newPinAgain);
+        // Button Save
+        Button button_newPinSave = (Button) viewInflated.findViewById(R.id.button_newPinSave);
+        // Button Cancel
+        Button button_newPinCancel = (Button) viewInflated.findViewById(R.id.button_newPinCancel);
 
         builder.setView(viewInflated);
         final AlertDialog dialog = builder.create();
 
-        //Remove Button
-
-
-        Button button_newPinSave = (Button) viewInflated.findViewById(R.id.button_newPinSave);
+        // Trigger Event Clicks
         button_newPinSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(_TITLE,"Change to:"+editText_newPin.getText().toString());
-                Toast.makeText(_context, "Changed Successfully!",
-                        Toast.LENGTH_LONG).show();
+                // Check if pin matches
+                String sPwd = editText_newPin.getText().toString();
+                String sRePwd = editText_newPinAgain.getText().toString();
+                if(!sPwd.equals(sRePwd)) {
+                    Toast.makeText(_context, "Pin does not match",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if(sPwd.length() != 4) {
+                    Toast.makeText(_context, "Pin requires 4 digits",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                new TaskChangePin().execute(Integer.toString(userData.getId()),
+                        Integer.toString(lockData.getLockId()), Common.PinToHex(editText_newPin.getText().toString()));
                 dialog.dismiss();
             }
         });
-
-        Button button_newPinCancel = (Button) viewInflated.findViewById(R.id.button_newPinCancel);
         button_newPinCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -266,6 +291,114 @@ public class CommandActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(_context, "Failed to remove all owners!",
                         Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    public class TaskCheckTypeUser extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("user_id", params[0]);
+            postParam.put("lock_id", params[1]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/CheckTypeUser", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.result_success) {
+                try {
+                    String userType = jsonData.getString("type");
+                    txt_typeUser.setText(userType.toUpperCase());
+                    if(userType.equals("root")) {
+                        button_share.setVisibility(View.VISIBLE);
+                        button_history.setVisibility(View.VISIBLE);
+                        button_changePass.setVisibility(View.VISIBLE);
+                        button_infomation.setVisibility(View.VISIBLE);
+                        button_remove.setVisibility(View.VISIBLE);
+                    } else {
+                        button_share.setVisibility(View.GONE);
+                        button_history.setVisibility(View.GONE);
+                        button_changePass.setVisibility(View.GONE);
+                        button_infomation.setVisibility(View.GONE);
+                        button_remove.setVisibility(View.GONE);
+                    }
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            }
+        }
+    }
+
+    public class TaskChangePin extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("user_id", params[0]);
+            postParam.put("lock_id", params[1]);
+            postParam.put("new_pin", params[2]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/ChangePin", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.result_success) {
+                try {
+                    Toast.makeText(_context, "Saved PIN successfully",
+                            Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else {
+                Toast.makeText(_context, "Failed to connect to server",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    public class TaskCheckLogin extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... params) {
+            Map<String, String> postParam = new HashMap<>();
+            postParam.put("email", params[0]);
+            postParam.put("password", params[1]);
+            try{
+                String jsonString = m_AccessServiceAPI.getJSONStringWithParam_POST(Common.SERVICE_API_URL + "/Login", postParam);
+                jsonData = new JSONObject(jsonString);
+                return jsonData.getInt("result");
+            }catch (Exception e) {
+                e.printStackTrace();
+                return Common.exception_code;
+            }
+        }
+        @Override
+        protected void onPostExecute(Integer integer) {
+            super.onPostExecute(integer);
+            if(integer == Common.login_success_code) {
+                try {
+                    // open change pin dialog
+                    showDialog_changePin();
+                } catch (Exception e) {
+                    Log.v("Exception", e.toString());
+                }
+            } else if (integer == Common.user_not_existing_code) {
+                Toast.makeText(_context, "Password is not correct!", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(_context, "Failed to connect server!", Toast.LENGTH_LONG).show();
             }
         }
     }

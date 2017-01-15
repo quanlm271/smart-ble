@@ -1,6 +1,11 @@
 package se07.smart_ble.API;
 
+import android.util.Base64;
+import android.util.Log;
 import android.widget.EditText;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 import se07.smart_ble.Models.LockData;
 import se07.smart_ble.Models.UserData;
@@ -27,6 +32,8 @@ public class Common {
     public static final int result_success = 10;
     public static final int lock_has_owner_code = 11;
     public static final int lock_has_no_owner_code = 12;
+    public static final int pin_not_correct_code = 13;
+    public static final int pin_does_not_match = 14;
 
     public static boolean isEmpty(EditText etText) {
         if (etText.getText().toString().trim().length() > 0)
@@ -62,5 +69,18 @@ public class Common {
         lockData.setName("LOCK 01");
 
         return lockData;
+    }
+
+    // Generate Key AES
+    public static byte[] GenerateKeyAES (int keySize) {
+        try {
+            KeyGenerator gen = KeyGenerator.getInstance("AES");
+            gen.init(keySize);
+            SecretKey k = gen.generateKey();
+            return k.getEncoded();
+        } catch (Exception e) {
+            Log.d("GenerateKeyAES Error", e.toString());
+            return null;
+        }
     }
 }

@@ -116,40 +116,16 @@ app.post('/login', function(req, res) {
 			return;
 		}
 		
-		//console.log(">> Result: ", result);
-		//console.log(">> Total item: ", Object.keys(result).length);
 		if(Object.keys(result).length == 0) {
 			console.log(">> Login, User is not existing");
 			jsonRes["result"] = jsonConfig["user_not_existing_code"];
 			res.send(jsonRes);
 		} else {
-			//jsonRes["result"] = 0;
-			//jsonRes["message"] = JSON.parse(JSON.stringify(result));
-			
-			// get list device
-			//con.query("select o.user_type, u.user_id, u.user_name, u.email, l.lock_id, l.mac, l.name, l.status from owners as o INNER JOIN users as u on o.user_id = u.user_id LEFT JOIN `lock` as l on o.lock_id = l.lock_id where u.email = ?", user[0], function (err, result) {
-			//	if(err) {
-			//		OnDbErr(err);
-			//		res.send(jsonRes);
-			//		return;
-			//	}
-			//	console.log(">> Login, Total device: ", Object.keys(result).length);
-			//	jsonRes["result"] = jsonConfig["login_success_code"];
-			//	//jsonRes["message"] = JSON.parse(JSON.stringify(result));
-			//	res.send(jsonRes);
-			//});
-			con.query("select user_id, user_name from users where email = ?", req.body.email, function (req, result) {
-				if(err) {
-					OnDbErr(err);
-					res.send(jsonRes);
-					return;
-				}
-				console.log(">> Login success");
-				jsonRes["result"] = jsonConfig["login_success_code"];
-				jsonRes["uid"] = result[0]["user_id"];
-				jsonRes["user_name"] = result[0]["user_name"];
-				res.send(jsonRes);
-			});
+			console.log(">> Login success");
+			jsonRes["result"] = jsonConfig["login_success_code"];
+			jsonRes["uid"] = result[0]["user_id"];
+			jsonRes["user_name"] = result[0]["user_name"];
+			res.send(jsonRes);
 		}
 	});
 });
@@ -171,7 +147,6 @@ app.post ('/converthex', function(req, res) {
 	var hexData = req.body.phash;
 	console.log(">> hex data: ", hexData);
 	var bytesData = convertHex.hexToBytes(hexData);
-	console.log(convertHex.bytesToHex(bytesData));
 	//console.log(">> BytesData: ", bytesData);
 	var byteArrayMac = bytesData.splice(16, 6);
 	//console.log(">> byte array mac: ", byteArrayMac);
@@ -182,37 +157,39 @@ app.post ('/converthex', function(req, res) {
 	var user_id = parseInt(convertHex.bytesToHex(byteArrayUserId), 16);
 	console.log(">> UID: ", user_id);
 	
-	// get lock_id success
-	var where = [user_id, mac];
-	con.query("SELECT * FROM `owners` as o, `lock` as l WHERE o.lock_id = l.lock_id and  user_id = ? and mac = ?", where, function (err, result) {
-		if(err) {
+	// get pin from mac
+	con.query("SELECT * FROM `lock` WHERE mac = ?", mac, function (err, result){
+		if(err){
 			OnDbErr(err);
 			res.send(jsonRes);
 			return;
 		}
 		
-		if(Object.keys(result).length == 0) {
-			jsonRes["result"] = jsonConfig["user_not_owns_lock"];
-			res.send(jsonRes);
-			console.log(">> User does not owns the lock");
-		} else {
-			jsonRes["result"] = jsonConfig["user_owns_lock"];
-			//res.send(jsonRes);
-			console.log(">> User owns the lock");
-			// get pin hex
-			con.query("SELECT pin FROM `lock` where mac = ?", mac, function (err, result) {
-				if(err) {
-					OnDbErr(err);
-					res.send(jsonRes);
-					return;
-					return;
-				}
-				
-				var pinHex = result[0]["pin"];
-				var pinHash = enc_dec.create_pin_hash(pinHex);
-				var preHash = convertHex.bytesToHex(bytesData);
-			});
-		}
+		var lock_id = result[0]["lock_id"];
+		var where = [user_id, lock_id];
+		con.query("SELECT * FROM `owners` where user_id = ? and lock_id = ?", where, function (err, result){
+			if(err){
+				OnDbErr(err);
+				res.send(jsonRes);
+				return;
+			}
+			
+			var pinHex = result[0]["pin"];
+			var pinHash = enc_dec.create_pin_hash(pinHex);
+			var preHash = convertHex.bytesToHex(bytesData);
+			var pinData = enc_dec.getPinData(preHash, pinHash);
+			console.log(">> ConvertHex, PinData: ", pinData);
+			var jsonPinData = enc_dec.PinDataToJson(pinData);
+			if(pinHex == jsonPinData["pin"]) {
+				console.log(">> ConvertHex, PIN is correct");
+				jsonRes["result"] = jsonConfig["result_success"];
+				res.send(jsonRes);
+			} else {
+				console.log(">> ConvertHex, PIN is not correct");
+				jsonRes["result"] = jsonConfig["pin_not_correct_code"];
+				res.send(jsonRes);
+			}
+		});
 	});
 });
 
@@ -234,7 +211,7 @@ function byteArray2Mac (byteArray) {
 			result += ":";
 		}
 	}
-	return result;
+	return result.toUpperCase();
 }
 
 app.post ('/LoadDevice', function(req, res) {
@@ -274,9 +251,6 @@ app.post ('/AddDevice', function(req, res) {
 		return;
 	}
 	
-	var status = req.body.hasOwnProperty("status") ? req.body.status : "inactive";
-	var set = [req.body.mac.toUpperCase()];
-	
 	// 1. check if lock is in database
 	con.query("SELECT * FROM `lock` where mac = ?", req.body.mac.toUpperCase(), function (err, result){
 		if(err) {
@@ -285,30 +259,45 @@ app.post ('/AddDevice', function(req, res) {
 			return;
 		}
 		
-		if(Object.keys(result).length > 0) {
-			
-		} else {
-			
-		}
-	});
-	// 2. if not, insert lock
-	// 3. if yes, update name and pin
-	// 
-	
-	con.query("select * from `lock` where mac = ?", set, function (err, result) {
-		if(err) {
-			OnDbErr(err);
-			res.send(jsonRes);
-			return;
-		}
-		//console.log('>> Add Device, last inserted ID: ', result.insertId);
+		var status = req.body.hasOwnProperty("status") ? req.body.status : "inactive";
 		var type = req.body.hasOwnProperty("type") ? req.body.type : "root";
-		set = [req.body.uid, result[0]["lock_id"], type];
-		con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?", set, function (err, result) {
-			console.log(">> Add Device, Add Owner success");
-			jsonRes["result"] = jsonConfig["result_success"];
-			res.send(jsonRes);
-		});
+			
+		if(Object.keys(result).length == 0) {
+			// 2. if not, insert lock	
+			var set = [req.body.mac.toUpperCase(), req.body.name, req.body.pin, status];
+			con.query("insert into `lock` set mac = ?, name = ?, pin = ?, status = ?", set, function (err, result) {
+				if(err) {
+					OnDbErr(err);
+					res.send(jsonRes);
+					return;
+				}
+				console.log('>> Add New Device, MAC: ' + req.body.mac + ', NAME = ' + req.body.name);
+				set = [req.body.uid, result.insertId, type, req.body.pin];
+				con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?, pin = ?", set, function (err, result) {
+					console.log(">> Add Owner As Root Successfully");
+					jsonRes["result"] = jsonConfig["result_success"];
+					res.send(jsonRes);
+				});
+			});
+		} else {
+			var lock_id = result[0]["lock_id"];
+			// 3. if yes, update name and pin
+			var set = [req.body.name, req.body.pin, status, lock_id];
+			con.query("update `lock` set name = ?, pin = ?, status = ? where lock_id = ?", set, function (err, result) {
+				if(err) {
+					OnDbErr(err);
+					res.send(jsonRes);
+					return;
+				}
+				console.log('>> Update Device, MAC: ' + req.body.mac + ', NAME = ' + req.body.name);
+				set = [req.body.uid, lock_id, type, req.body.pin];
+				con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?, pin = ?", set, function (err, result) {
+					console.log(">> Add Owner As Root Successfully");
+					jsonRes["result"] = jsonConfig["result_success"];
+					res.send(jsonRes);
+				});
+			});
+		}
 	});
 });
 
@@ -386,8 +375,9 @@ app.post('/AddOwner', function (req, res) {
 				var user_id = result[0]["user_id"];
 				con.query("SELECT lock_id FROM `lock` WHERE mac = ?", req.body.mac, function (err, result) {
 					var lock_id = result[0]["lock_id"];
-					var set = [user_id, lock_id, req.body.type];
-					con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?", set, function (err, result) {
+					var pin = result[0]["pin"];
+					var set = [user_id, lock_id, req.body.type, pin];
+					con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?, pin = ?", set, function (err, result) {
 						console.log(">> Add Owner success");
 						jsonRes["result"] = jsonConfig["result_success"];
 						res.send(jsonRes);
@@ -515,5 +505,60 @@ app.post('/CheckNewDevice', function (req, res) {
 			jsonRes["result"] = jsonConfig["lock_has_no_owner_code"];
 			res.send(jsonRes);
 		}
+	});
+});
+
+// API: CheckTypeUser
+app.post('/CheckTypeUser', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("user_id") || !req.body.hasOwnProperty("lock_id")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	var where = [req.body.user_id, req.body.lock_id];
+	con.query("SELECT * FROM `owners` where user_id = ? and lock_id = ?", where, function (err, result){
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		
+		if(Object.keys(result).length > 0) {
+			console.log(">> CheckTypeUser: ", result[0]["user_type"]);
+			jsonRes["type"] = result[0]["user_type"];
+			jsonRes["result"] = jsonConfig["result_success"];
+			res.send(jsonRes);
+		} else {
+			console.log("CheckTypeUser, User does not own lock ");
+			jsonRes["result"] = jsonConfig["user_not_owns_lock"];
+			res.send(jsonRes);
+		}
+	});
+});
+
+// API: Change PIN
+app.post('/ChangePin', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("user_id") || !req.body.hasOwnProperty("lock_id") || !req.body.hasOwnProperty("new_pin")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	var update = [req.body.new_pin, req.body.user_id, req.body.lock_id];
+	con.query("UPDATE owners set pin = ? where user_id = ? and lock_id = ?", update, function(err, result){
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		console.log(">> Change PIN successfully");
+		jsonRes["result"] = jsonConfig["result_success"];
+		res.send(jsonRes);
 	});
 });

@@ -57,7 +57,7 @@ module.exports ={
 	
 	getPinData:function(preHash, pinHash){
 		var result = this.aes_dec(preHash,pinHash)
-		return result.toString();
+		return result.toString().toUpperCase();
 	},
 
 	convert_HexToString:function(hexString){
@@ -118,7 +118,16 @@ module.exports ={
 		var re = CryptoJS.AES.decrypt(base64_Data, mKey,  {mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.ZeroPadding})
 		console.log("DEC:",re.toString())
 		return re.toString();
+	},
+
+	// Convert PinData to Json
+	PinDataToJson : function (hexPinData) {
+		var arrayPinData = convert.hexToBytes(hexPinData);
+		var jsonPinData = {};
+		jsonPinData["command id"] = convert.bytesToHex(arrayPinData.splice(0, 2));
+		jsonPinData["pin"] = convert.bytesToHex(arrayPinData.splice(0, 4));
+		jsonPinData["random_byte"] = convert.bytesToHex(arrayPinData.splice(0, 4));
+		jsonPinData["session key"] = convert.bytesToHex(arrayPinData.splice(0, 6));
+		return jsonPinData;
 	}
-
-
 }

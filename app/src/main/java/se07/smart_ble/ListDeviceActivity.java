@@ -99,21 +99,9 @@ public class ListDeviceActivity extends AppCompatActivity {
                         bleDefine.PERMISSION_REQUEST_COARSE_LOCATION);
             }
         }
-        //
+
+        // Button AddNew
         btnAddNew = (Button) findViewById(R.id.btn_addNewLock);
-        btnAddNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                if(mService != null) {
-//                    mService.stopLeScanning();
-////                    mService.disconnect(mLock);
-//                }
-                Intent intent = new Intent(_context, ListNewDeviceActivity.class);
-                mySerializable desMySerial = new mySerializable();
-                desMySerial.setUserData(userData);
-                startActivity(intent);
-            }
-        });
         //List View
         listView_listDevice = (ListView)findViewById(R.id.listView_listDevice);
         // List Lock Data
@@ -133,7 +121,27 @@ public class ListDeviceActivity extends AppCompatActivity {
             mySerializable originMySerial = (mySerializable) serial;
             userData = originMySerial.getUserData();
         }
+
+        // Trigger click event on button AddNew
+        btnAddNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                if(mService != null) {
+//                    mService.stopLeScanning();
+////                    mService.disconnect(mLock);
+//                }
+                Intent intent = new Intent(_context, ListNewDeviceActivity.class);
+                mySerializable desMySerial = new mySerializable();
+                desMySerial.setUserData(userData);
+                intent.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                startActivity(intent);
+            }
+        });
+
+        // Inintiate service
         service_init();
+
+        // Trigger click event on listview item
         listView_listDevice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -161,21 +169,21 @@ public class ListDeviceActivity extends AppCompatActivity {
 
                 Object obj = listView_listDevice.getItemAtPosition(position);
                 Log.w(_TAG,"Connect " + obj.toString());
-                LockData selectedLockData = (LockData) obj;
-                if(selectedLockData.IsInBound) {
+                lockData = (LockData) obj;
+                if(lockData.IsInBound) {
                     // Get approriated bleDevice
-                    mLock = mService.listDevice.get(selectedLockData.get_mMAC());
+                    mLock = mService.listDevice.get(lockData.get_mMAC());
                     mService._connectToDevice(mLock);
-                    mySerializable desMySerial = new mySerializable(mLock);
-                    desMySerial.setUserData(userData);
-                    desMySerial.setLockData(lockData);
-                    Intent intent = new Intent(_context, PinAccessActivity.class);
-                    intent.putExtra(bleDefine.LOCK_DATA,desMySerial);
-                    startActivity(intent);
                 } else {
                     // show toast here
                     Toast.makeText(ListDeviceActivity.this, "Device is not in bound!", Toast.LENGTH_LONG).show();
                 }
+                mySerializable desMySerial = new mySerializable(mLock);
+                desMySerial.setUserData(userData);
+                desMySerial.setLockData(lockData);
+                Intent intent = new Intent(_context, PinAccessActivity.class);
+                intent.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                startActivity(intent);
             }
         });
 

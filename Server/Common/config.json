@@ -10,5 +10,6 @@
 	"lock_not_exist" : 9,
 	"result_success" : 10,
 	"lock_has_owner_code" : 11,
-    "lock_has_no_owner_code" : 12
+    "lock_has_no_owner_code" : 12,
+	"pin_not_correct_code" : 13
 }

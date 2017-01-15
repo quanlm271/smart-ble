@@ -73,8 +73,6 @@ public class ListNewDeviceActivity extends AppCompatActivity {
     private UserData userData;
     public bleLockDevice mLock;
 
-    private mySerializable mSerialeizable;
-
     // View
     private ListView listView_newDevice;
 
@@ -114,12 +112,11 @@ public class ListNewDeviceActivity extends AppCompatActivity {
         jsonData = new JSONObject();
 
         // Initiate Models
-        userData = new UserData();
+        //userData = new UserData();
         mLock = new bleLockDevice();
-        mSerialeizable = new mySerializable(null);
 
         // Load Models
-        Serializable serial = getIntent().getSerializableExtra("myserial");
+        Serializable serial = getIntent().getSerializableExtra(bleDefine.LOCK_DATA);
         if(serial != null) {
             mySerializable originMySerial = (mySerializable) serial;
             userData = originMySerial.getUserData();
@@ -132,10 +129,10 @@ public class ListNewDeviceActivity extends AppCompatActivity {
                 Object obj = listView_newDevice.getItemAtPosition(position);
                 Log.w(_TAG,"Connect " + obj.toString());
                 bleLockDevice lock= (bleLockDevice) obj;
-                if(lock != null) {
-                    if (lock.ble_mac != lock.ble_mac)
-                        mService.disconnect(lock);
-                }
+//                if(lock != null) {
+//                    if (lock.ble_mac != lock.ble_mac)
+//                        mService.disconnect(lock);
+//                }
                 mLock = lock;
                 new TaskCheckNewDevice().execute(mLock.ble_mac);
             }
@@ -359,7 +356,7 @@ public class ListNewDeviceActivity extends AppCompatActivity {
             super.onPostExecute(integer);
             if(integer == Common.lock_has_no_owner_code) {
                 try {
-                    mService._connectToDevice(mLock);
+                    //mService._connectToDevice(mLock);
 //                bleLockDevice dLock = new LockData(mLock.ble_name, mLock.ble_mac,mLock.ble_sk);
 
                     Intent intent = new Intent(_context, AddDeviceActivity.class);
