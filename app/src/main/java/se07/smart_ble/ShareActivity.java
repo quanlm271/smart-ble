@@ -82,6 +82,10 @@ public class ShareActivity extends AppCompatActivity {
         textView_result01 = (TextView) findViewById(R.id.textView_searchResult01);
         textView_result02 = (TextView) findViewById(R.id.textView_searchResult02);
 
+        // Initiate View
+        textView_result01.setVisibility(View.GONE);
+        textView_result02.setVisibility(View.GONE);
+
         // AccessService
         m_AccessServiceAPI = new AccessServiceAPI();
         // Json Object

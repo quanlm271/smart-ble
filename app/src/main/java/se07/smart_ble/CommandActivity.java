@@ -177,9 +177,11 @@ public class CommandActivity extends AppCompatActivity {
         });
 
         if(lockData.IsInBound) {
-            button_unlock.setVisibility(View.VISIBLE);
+            //button_unlock.setVisibility(View.VISIBLE);
+            button_unlock.setEnabled(true);
         } else {
-            button_unlock.setVisibility(View.GONE);
+            //button_unlock.setVisibility(View.GONE);
+            button_unlock.setEnabled(false);
         }
         new TaskCheckTypeUser().execute(Integer.toString(userData.getId()), Integer.toString(lockData.getLockId()));
     }
@@ -336,17 +338,27 @@ public class CommandActivity extends AppCompatActivity {
                     String userType = jsonData.getString("type");
                     txt_typeUser.setText(userType.toUpperCase());
                     if(userType.equals("root")) {
-                        button_share.setVisibility(View.VISIBLE);
-                        button_history.setVisibility(View.VISIBLE);
-                        button_changePass.setVisibility(View.VISIBLE);
-                        button_infomation.setVisibility(View.VISIBLE);
-                        button_remove.setVisibility(View.VISIBLE);
+//                        button_share.setVisibility(View.VISIBLE);
+//                        button_history.setVisibility(View.VISIBLE);
+//                        button_changePass.setVisibility(View.VISIBLE);
+//                        button_infomation.setVisibility(View.VISIBLE);
+//                        button_remove.setVisibility(View.VISIBLE);
+                        button_share.setEnabled(true);
+                        //button_history.setEnabled(true);
+                        button_changePass.setEnabled(true);
+                        button_infomation.setEnabled(true);
+                        button_remove.setEnabled(true);
                     } else {
-                        button_share.setVisibility(View.GONE);
-                        button_history.setVisibility(View.GONE);
-                        button_changePass.setVisibility(View.GONE);
-                        button_infomation.setVisibility(View.GONE);
-                        button_remove.setVisibility(View.GONE);
+//                        button_share.setVisibility(View.GONE);
+//                        button_history.setVisibility(View.GONE);
+//                        button_changePass.setVisibility(View.GONE);
+//                        button_infomation.setVisibility(View.GONE);
+//                        button_remove.setVisibility(View.GONE);
+                        button_share.setEnabled(false);
+                        //button_history.setEnabled(false);
+                        button_changePass.setEnabled(false);
+                        button_infomation.setEnabled(false);
+                        button_remove.setEnabled(false);
                     }
                 } catch (Exception e) {
                     Log.v("Exception", e.toString());

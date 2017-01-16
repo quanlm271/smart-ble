@@ -371,13 +371,15 @@ app.post('/AddOwner', function (req, res) {
 			jsonRes["result"] = jsonConfig["user_owns_lock"];
 			res.send(jsonRes);
 		} else {
-			con.query("SELECT user_id FROM `users` where email = ?", req.body.email, function (err, result) {
+			con.query("SELECT * FROM `users` where email = ?", req.body.email, function (err, result) {
 				var user_id = result[0]["user_id"];
-				con.query("SELECT lock_id FROM `lock` WHERE mac = ?", req.body.mac, function (err, result) {
+				con.query("SELECT * FROM `lock` WHERE mac = ?", req.body.mac, function (err, result) {
 					var lock_id = result[0]["lock_id"];
 					var pin = result[0]["pin"];
+					console.log(">> pin: ", result[0]["pin"]);
 					var set = [user_id, lock_id, req.body.type, pin];
 					con.query("insert into `owners` set user_id = ?, lock_id = ?, user_type = ?, pin = ?", set, function (err, result) {
+					
 						console.log(">> Add Owner success");
 						jsonRes["result"] = jsonConfig["result_success"];
 						res.send(jsonRes);

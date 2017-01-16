@@ -69,6 +69,9 @@ public class LoginActivity extends AppCompatActivity {
         // Initiate models
         userData = new UserData();
 
+        // Initiate Views
+        textview_alertMessage.setVisibility(View.GONE);
+
         //Buttons
         button_login = (Button)findViewById(R.id.button_login);
 

@@ -51,6 +51,7 @@ public class RegisterActivity extends AppCompatActivity {
         button_cancel = (Button) findViewById(R.id.button_cancelRegister);
         // alert message
         textView_alertMessage = (TextView) findViewById(R.id.textView_registerAlert);
+        textView_alertMessage.setVisibility(View.GONE);
 
         //
         m_AccessServiceAPI = new AccessServiceAPI();
