@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 16, 2017 at 03:42 AM
+-- Generation Time: Jan 16, 2017 at 06:29 AM
 -- Server version: 10.1.13-MariaDB
 -- PHP Version: 5.6.23
 
@@ -31,16 +31,18 @@ CREATE TABLE `hictory` (
   `user_id` int(11) NOT NULL,
   `lock_id` int(11) NOT NULL,
   `command` enum('lock','unlock') NOT NULL,
-  `timestamp` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ;
+  `timestamp` varchar(30) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `location` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `hictory`
 --
 
 INSERT INTO `hictory` (`id`, `user_id`, `lock_id`, `command`, `timestamp`, `location`) VALUES
-(1, 12, 1, 'unlock', '2017-01-15 20:25:03.095096', 'Tan Phu, Quan 9, TPHCM'),
-(2, 12, 1, 'lock', '2017-01-11 06:43:53.479930', 'Tan Phu, Quan 9, TPHCM');
+(1, 12, 5, 'unlock', '2017/01/16 09:55:41', 'Quan 9, TPHCM'),
+(2, 12, 5, 'lock', '2017/01/16 09:55:44', 'Quan 9, TPHCM'),
+(7, 12, 5, 'unlock', '01/16/2017 12:17:18', 'District 9, Ho Chi Minh');
 
 -- --------------------------------------------------------
 
@@ -136,6 +138,12 @@ INSERT INTO `users` (`user_id`, `user_name`, `email`, `password`) VALUES
 --
 
 --
+-- Indexes for table `hictory`
+--
+ALTER TABLE `hictory`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `lock`
 --
 ALTER TABLE `lock`
@@ -163,7 +171,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `hictory`
 --
 ALTER TABLE `hictory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 --
 -- AUTO_INCREMENT for table `lock`
 --
