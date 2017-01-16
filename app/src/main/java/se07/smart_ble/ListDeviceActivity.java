@@ -331,7 +331,7 @@ public class ListDeviceActivity extends AppCompatActivity {
                 //listView_listDevice.setAdapter(adapter_listDevice);
                 for (int i = 0; i < listLockData.size(); i++) {
                     if(listLockData.get(i).IsInBound) {
-                        listView_listDevice.getChildAt(i).setBackgroundColor(Color.parseColor("#3b5998"));
+                        listView_listDevice.getChildAt(i).setBackgroundColor(Color.parseColor("#b3e784"));
                     }
                 }
             }

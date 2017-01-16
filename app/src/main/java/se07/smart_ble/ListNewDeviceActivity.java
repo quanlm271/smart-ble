@@ -188,12 +188,12 @@ public class ListNewDeviceActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
         if (mGatt == null) {
             return;
         }
         mGatt.close();
         mGatt = null;
-        super.onDestroy();
     }
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {

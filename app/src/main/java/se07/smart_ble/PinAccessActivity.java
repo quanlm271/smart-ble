@@ -157,6 +157,13 @@ public class PinAccessActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mLockData.gatt != null)
+            mLockData.gatt.close();
+    }
+
     private void ResetArrayEditText () {
         for (TextView edt : arrayEditText) {
             edt.setText("");

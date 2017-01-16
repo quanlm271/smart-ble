@@ -24,7 +24,7 @@ import se07.smart_ble.Models.UserData;
  */
 
 public class Common {
-    public static final String SERVICE_API_URL = "http://192.168.137.1:8081";
+    public static final String SERVICE_API_URL = "http://192.168.137.250:8081";
     //public static final String SERVICE_API_URL = "http://10.0.2.2:8081";
 //    public static final String SERVICE_API_URL = "http://10.45.7.213:8081";
     // public static final String SERVICE_API_URL = "http://10.45.130.235:8081";
