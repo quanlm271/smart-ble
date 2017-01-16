@@ -27,6 +27,7 @@ import java.util.concurrent.locks.Lock;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Models.History;
 import se07.smart_ble.Models.LockData;
 import se07.smart_ble.Models.UserData;
 import se07.smart_ble.Serializable.mySerializable;
@@ -305,7 +306,12 @@ public class PinAccessActivity extends AppCompatActivity {
                 try {
                     if(lockData.IsInBound) {
                         mLockData.sendCommand("32");
+                        // Save hictory
+                        History his = new History(_context, userData.getId(), lockData.getLockId(), "unlock");
+                        his.SaveHistory();
                     }
+
+                    // Chuyen activity
                     Intent i = new Intent(_context, CommandActivity.class);
                     mySerializable desMySerial = new mySerializable();
                     desMySerial.setLockData(lockData);

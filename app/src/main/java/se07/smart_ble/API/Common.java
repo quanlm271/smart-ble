@@ -1,8 +1,17 @@
 package se07.smart_ble.API;
 
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.EditText;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -34,6 +43,8 @@ public class Common {
     public static final int lock_has_no_owner_code = 12;
     public static final int pin_not_correct_code = 13;
     public static final int pin_does_not_match = 14;
+
+    public static final String datetime_format = "MM/dd/yyyy HH:mm:ss";
 
     public static boolean isEmpty(EditText etText) {
         if (etText.getText().toString().trim().length() > 0)
@@ -82,5 +93,25 @@ public class Common {
             Log.d("GenerateKeyAES Error", e.toString());
             return null;
         }
+    }
+
+    public static String GetCurrentLocation (Context context) {
+        Geocoder gCoder = new Geocoder(context, Locale.ENGLISH);
+        GPSTracker gpsTracker = new GPSTracker(context);
+        try {
+            List<Address> addresses = gCoder.getFromLocation(gpsTracker.latitude, gpsTracker.longitude, 1);
+            if (addresses != null && addresses.size() > 0) {
+                return addresses.get(0).getSubAdminArea() + ", " + addresses.get(0).getAdminArea();
+            }
+            return "";
+        } catch (Exception e) {
+            Log.v("Get Location", e.toString());
+            return "";
+        }
+    }
+
+    public static String GetCurrentDatetime(String format) {
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
+        return sdf.format(new Date());
     }
 }

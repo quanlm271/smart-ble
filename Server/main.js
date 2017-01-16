@@ -562,3 +562,54 @@ app.post('/ChangePin', function (req, res) {
 		res.send(jsonRes);
 	});
 });
+
+// API: Save History
+app.post('/SaveHistory', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("user_id") || !req.body.hasOwnProperty("lock_id") || !req.body.hasOwnProperty("command") ||
+	!req.body.hasOwnProperty("timestamp") || !req.body.hasOwnProperty("location")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	var set = [req.body.user_id, req.body.lock_id, req.body.command, req.body.timestamp, req.body.location];
+	con.query("insert into hictory set user_id = ?, lock_id = ?, command = ?, timestamp = ?, location = ?", set, function(err, result){
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		
+		console.log(">> Save history successfully");
+		jsonRes["result"] = jsonConfig["result_success"];
+		res.send(jsonRes);
+	});
+});
+
+// API: Load History
+app.post('/LoadHistory', function (req, res) {
+	res.contentType('application/json');
+	
+	// check if incorrect requested json format
+	if(!req.body.hasOwnProperty("lock_id")) {
+		OnDataIncorrect();
+		res.send(jsonRes);
+		return;
+	}
+	
+	con.query("SELECT h.*, u.user_name FROM hictory as h, users as u where h.lock_id = ? and h.user_id = u.user_id", req.body.lock_id, function(err, result){
+		if(err) {
+			OnDbErr(err);
+			res.send(jsonRes);
+			return;
+		}
+		
+		console.log(">> LoadHistory successfully");
+		jsonRes["data"] = JSON.parse(JSON.stringify(result));
+		jsonRes["result"] = jsonConfig["result_success"];
+		res.send(jsonRes);
+	});
+});

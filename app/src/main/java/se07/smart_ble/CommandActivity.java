@@ -25,6 +25,7 @@ import java.util.Map;
 
 import se07.smart_ble.API.AccessServiceAPI;
 import se07.smart_ble.API.Common;
+import se07.smart_ble.Models.History;
 import se07.smart_ble.Models.LockData;
 import se07.smart_ble.Models.UserData;
 import se07.smart_ble.Serializable.mySerializable;
@@ -99,11 +100,15 @@ public class CommandActivity extends AppCompatActivity {
                     islocked = false;
                     mLockData.sendCommand("32");
                     button_unlock.setText("Click to Lock");
+                    History his = new History(_context, userData.getId(), lockData.getLockId(), "unlock");
+                    his.SaveHistory();
                 }
                 else{
                     mLockData.sendCommand("33");
                     islocked = true;
                     button_unlock.setText("Click to Unclock");
+                    History his = new History(_context, userData.getId(), lockData.getLockId(), "lock");
+                    his.SaveHistory();
                 }
             }
         });
@@ -123,7 +128,13 @@ public class CommandActivity extends AppCompatActivity {
         button_history.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                mySerializable desMySerial = new mySerializable();
+                desMySerial.setBleLockDevice(mLockData);
+                desMySerial.setLockData(lockData);
+                desMySerial.setUserData(userData);
+                Intent i = new Intent(_context, HistoryActivity.class);
+                i.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                startActivity(i);
             }
         });
 
