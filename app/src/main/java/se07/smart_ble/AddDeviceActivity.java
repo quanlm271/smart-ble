@@ -156,7 +156,7 @@ public class AddDeviceActivity extends AppCompatActivity {
                 try {
                     mySerializable desMySerial = new mySerializable();
                     desMySerial.setUserData(userData);
-                    i.putExtra("myserial", desMySerial);
+                    i.putExtra(bleDefine.LOCK_DATA, desMySerial);
                     startActivity(i);
                     finish();
                 } catch (Exception e) {

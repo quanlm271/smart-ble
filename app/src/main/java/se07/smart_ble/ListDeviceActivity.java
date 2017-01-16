@@ -116,7 +116,7 @@ public class ListDeviceActivity extends AppCompatActivity {
         lockData = new LockData();
 
         // Load Models
-        Serializable serial = intent.getSerializableExtra("myserial");
+        Serializable serial = intent.getSerializableExtra(bleDefine.LOCK_DATA);
         if(serial != null) {
             mySerializable originMySerial = (mySerializable) serial;
             userData = originMySerial.getUserData();

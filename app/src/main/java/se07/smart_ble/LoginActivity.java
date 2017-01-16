@@ -138,7 +138,7 @@ public class LoginActivity extends AppCompatActivity {
                     mySerializable desMySerial = new mySerializable();
                     desMySerial.setUserData(userData);
                     Intent i = new Intent(_context,ListDeviceActivity.class);
-                    i.putExtra("myserial", desMySerial);
+                    i.putExtra(bleDefine.LOCK_DATA, desMySerial);
                     startActivity(i);
                     finish();
                 } catch (Exception e) {

@@ -296,6 +296,13 @@ public class CommandActivity extends AppCompatActivity {
                     Log.d(_TITLE,"SAVED!!!");
                     Toast.makeText(_context, "Remove all owners successfully!",
                             Toast.LENGTH_LONG).show();
+                    // start listdevice activity
+                    mySerializable desMySerial = new mySerializable();
+                    desMySerial.setUserData(userData);
+                    Intent i = new Intent(_context,ListDeviceActivity.class);
+                    i.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                    startActivity(i);
+                    finish();
                 } catch (Exception e) {
                     Log.v("Exception", e.toString());
                 }
@@ -371,6 +378,14 @@ public class CommandActivity extends AppCompatActivity {
                 try {
                     Toast.makeText(_context, "Saved PIN successfully",
                             Toast.LENGTH_LONG).show();
+
+                    // start listdevice activity
+                    mySerializable desMySerial = new mySerializable();
+                    desMySerial.setUserData(userData);
+                    Intent i = new Intent(_context,ListDeviceActivity.class);
+                    i.putExtra(bleDefine.LOCK_DATA, desMySerial);
+                    startActivity(i);
+                    finish();
                 } catch (Exception e) {
                     Log.v("Exception", e.toString());
                 }

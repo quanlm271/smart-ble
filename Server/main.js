@@ -455,10 +455,12 @@ app.post('/RemoveAllLockOwner', function (req, res) {
 			res.send(jsonRes);
 			return;
 		}
-
-		console.log(">> Remove all owners success");
-				jsonRes["result"] = jsonConfig["result_success"];
-				res.send(jsonRes);
+		// delete history
+		con.query("DELETE FROM hictory WHERE lock_id = ?", req.body.lock_id, function (err, result) {
+			console.log(">> Remove all owners success");
+			jsonRes["result"] = jsonConfig["result_success"];
+			res.send(jsonRes);
+		});
 	});
 });
 
